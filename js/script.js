@@ -1,0 +1,4416 @@
+// ============================================
+// MERCADO ARROZ - JAVASCRIPT APPLICATION
+// ============================================
+
+// ============================================
+// STATE MANAGEMENT & DATABASE
+// ============================================
+
+class MercadoArrozApp {
+    constructor() {
+        this.currentUser = null;
+        this.currentPage = 'landing';
+        this.currentChatId = null;
+        this.initializeDatabase();
+        this.loadUserSession();
+        this.initializeApp();
+    }
+
+    // Initialize mock database in localStorage
+    initializeDatabase() {
+        if (!localStorage.getItem('mercadoArroz_initialized')) {
+            // Sample Users
+            const users = [
+                {
+                    id: 'user_1',
+                    type: 'producer',
+                    name: 'João Silva',
+                    document: '123.456.789-00',
+                    email: 'joao.silva@email.com',
+                    password: '123456',
+                    phone: '(51) 99999-9999',
+                    city: 'Cachoeira do Sul',
+                    state: 'RS',
+                    rating: 4.8,
+                    reviewCount: 32,
+                    farmArea: 250,
+                    avgProduction: 1200,
+                    varieties: ['IRGA 424', 'GURI INTA CL', 'BR-IRGA 409'],
+                    certifications: ['Orgânico', 'GlobalGAP'],
+                    createdAt: '2024-01-15'
+                },
+                {
+                    id: 'user_2',
+                    type: 'industry',
+                    name: 'Indústria Riz S.A.',
+                    document: '12.345.678/0001-90',
+                    email: 'contato@riz.com.br',
+                    password: '123456',
+                    phone: '(51) 3000-0000',
+                    city: 'Porto Alegre',
+                    state: 'RS',
+                    rating: 4.9,
+                    reviewCount: 156,
+                    capacity: 5000,
+                    varieties: ['IRGA 424', 'IRGA 424 RI', 'GURI INTA CL'],
+                    createdAt: '2023-06-10'
+                },
+                {
+                    id: 'user_3',
+                    type: 'producer',
+                    name: 'Maria Oliveira',
+                    document: '987.654.321-00',
+                    email: 'maria.oliveira@email.com',
+                    password: '123456',
+                    phone: '(51) 98888-8888',
+                    city: 'Santa Maria',
+                    state: 'RS',
+                    rating: 4.6,
+                    reviewCount: 28,
+                    farmArea: 180,
+                    avgProduction: 850,
+                    varieties: ['IRGA 424', 'BR-IRGA 409'],
+                    certifications: ['GlobalGAP'],
+                    createdAt: '2024-03-20'
+                },
+                {
+                    id: 'user_4',
+                    type: 'producer',
+                    name: 'Carlos Pereira',
+                    document: '456.789.123-00',
+                    email: 'carlos.pereira@email.com',
+                    password: '123456',
+                    phone: '(53) 99777-7777',
+                    city: 'Jaguarão',
+                    state: 'RS',
+                    rating: 4.7,
+                    reviewCount: 15,
+                    farmArea: 300,
+                    avgProduction: 1500,
+                    varieties: ['IRGA 424', 'GURI INTA CL'],
+                    certifications: ['GlobalGAP'],
+                    createdAt: '2024-02-10'
+                },
+                {
+                    id: 'user_5',
+                    type: 'producer',
+                    name: 'Ana Costa',
+                    document: '321.654.987-00',
+                    email: 'ana.costa@email.com',
+                    password: '123456',
+                    phone: '(53) 99666-6666',
+                    city: 'Arroio Grande',
+                    state: 'RS',
+                    rating: 4.9,
+                    reviewCount: 42,
+                    farmArea: 500,
+                    avgProduction: 2800,
+                    varieties: ['IRGA 424', 'BR-IRGA 409', 'IRGA 424 RI'],
+                    certifications: ['Orgânico', 'GlobalGAP'],
+                    createdAt: '2023-11-05'
+                },
+                {
+                    id: 'user_6',
+                    type: 'producer',
+                    name: 'Roberto Santos',
+                    document: '147.258.369-00',
+                    email: 'roberto.santos@email.com',
+                    password: '123456',
+                    phone: '(53) 99555-5555',
+                    city: 'Pelotas',
+                    state: 'RS',
+                    rating: 4.5,
+                    reviewCount: 25,
+                    farmArea: 220,
+                    avgProduction: 1100,
+                    varieties: ['IRGA 424', 'GURI INTA CL'],
+                    certifications: ['GlobalGAP'],
+                    createdAt: '2024-01-25'
+                }
+            ];
+
+            // Sample Offers
+            const offers = [
+                {
+                    id: 'offer_1',
+                    producerId: 'user_1',
+                    variety: 'IRGA 424',
+                    type: 'Tipo 1',
+                    quantity: 500,
+                    unit: 'sacas',
+                    humidity: 18.0,
+                    price: 88.00,
+                    negotiable: true,
+                    partialSale: true,
+                    city: 'Cachoeira do Sul',
+                    state: 'RS',
+                    freight: 'FOB',
+                    hasTransport: true,
+                    description: 'Arroz de excelente qualidade, colheita recente. Disponível para visita técnica.',
+                    expiration: '2026-04-30',
+                    createdAt: '2026-03-05',
+                    status: 'active',
+                    views: 245,
+                    favorites: 18
+                },
+                {
+                    id: 'offer_2',
+                    producerId: 'user_3',
+                    variety: 'GURI INTA CL',
+                    type: 'Tipo 1',
+                    quantity: 300,
+                    unit: 'sacas',
+                    humidity: 19.5,
+                    price: 86.50,
+                    negotiable: true,
+                    partialSale: false,
+                    city: 'Santa Maria',
+                    state: 'RS',
+                    freight: 'CIF',
+                    hasTransport: true,
+                    description: 'Lote com umidade controlada, armazenamento climatizado.',
+                    expiration: '2026-04-15',
+                    createdAt: '2026-03-03',
+                    status: 'active',
+                    views: 189,
+                    favorites: 12
+                },
+                {
+                    id: 'offer_3',
+                    producerId: 'user_1',
+                    variety: 'BR-IRGA 409',
+                    type: 'Tipo 2',
+                    quantity: 800,
+                    unit: 'sacas',
+                    humidity: 20.0,
+                    price: 82.00,
+                    negotiable: true,
+                    partialSale: true,
+                    city: 'Cachoeira do Sul',
+                    state: 'RS',
+                    freight: 'Negociavel',
+                    hasTransport: false,
+                    description: 'Grande volume disponível, preço especial para compra total.',
+                    expiration: '2026-05-10',
+                    createdAt: '2026-02-28',
+                    status: 'active',
+                    views: 312,
+                    favorites: 24
+                },
+                {
+                    id: 'offer_4',
+                    producerId: 'user_3',
+                    variety: 'IRGA 424 RI',
+                    type: 'Tipo 1',
+                    quantity: 400,
+                    unit: 'sacas',
+                    humidity: 17.5,
+                    price: 90.00,
+                    negotiable: false,
+                    partialSale: true,
+                    city: 'Santa Maria',
+                    state: 'RS',
+                    freight: 'FOB',
+                    hasTransport: false,
+                    description: 'Arroz premium, baixa umidade, ideal para beneficiamento imediato.',
+                    expiration: '2026-04-20',
+                    createdAt: '2026-03-01',
+                    status: 'active',
+                    views: 167,
+                    favorites: 15
+                },
+                {
+                    id: 'offer_5',
+                    producerId: 'user_1',
+                    variety: 'IRGA 424',
+                    type: 'Tipo 1',
+                    quantity: 600,
+                    unit: 'sacas',
+                    humidity: 18.5,
+                    price: 87.50,
+                    negotiable: true,
+                    partialSale: true,
+                    city: 'Cachoeira do Sul',
+                    state: 'RS',
+                    freight: 'FOB',
+                    hasTransport: true,
+                    description: 'Lote certificado, disponível para retirada imediata.',
+                    expiration: '2026-05-05',
+                    createdAt: '2026-03-06',
+                    status: 'active',
+                    views: 134,
+                    favorites: 9
+                },
+                // Ofertas de Jaguarão - 5 ofertas totalizando 10.000 sacas
+                {
+                    id: 'offer_6',
+                    producerId: 'user_4',
+                    variety: 'IRGA 424',
+                    type: 'Tipo 1',
+                    quantity: 2000,
+                    unit: 'sacas',
+                    humidity: 17.5,
+                    price: 89.00,
+                    negotiable: true,
+                    partialSale: true,
+                    city: 'Jaguarão',
+                    state: 'RS',
+                    freight: 'FOB',
+                    hasTransport: true,
+                    description: 'Arroz de primeira qualidade, colheita 2026.',
+                    expiration: '2026-05-15',
+                    createdAt: '2026-03-08',
+                    status: 'active',
+                    views: 156,
+                    favorites: 14
+                },
+                {
+                    id: 'offer_7',
+                    producerId: 'user_4',
+                    variety: 'GURI INTA CL',
+                    type: 'Tipo 1',
+                    quantity: 2000,
+                    unit: 'sacas',
+                    humidity: 18.0,
+                    price: 88.50,
+                    negotiable: true,
+                    partialSale: false,
+                    city: 'Jaguarão',
+                    state: 'RS',
+                    freight: 'CIF',
+                    hasTransport: true,
+                    description: 'Lote completo disponível para entrega imediata.',
+                    expiration: '2026-05-10',
+                    createdAt: '2026-03-07',
+                    status: 'active',
+                    views: 142,
+                    favorites: 11
+                },
+                {
+                    id: 'offer_8',
+                    producerId: 'user_4',
+                    variety: 'IRGA 424',
+                    type: 'Tipo 2',
+                    quantity: 2000,
+                    unit: 'sacas',
+                    humidity: 19.0,
+                    price: 85.00,
+                    negotiable: true,
+                    partialSale: true,
+                    city: 'Jaguarão',
+                    state: 'RS',
+                    freight: 'FOB',
+                    hasTransport: false,
+                    description: 'Bom preço para volume grande.',
+                    expiration: '2026-05-20',
+                    createdAt: '2026-03-09',
+                    status: 'active',
+                    views: 98,
+                    favorites: 7
+                },
+                {
+                    id: 'offer_9',
+                    producerId: 'user_4',
+                    variety: 'BR-IRGA 409',
+                    type: 'Tipo 1',
+                    quantity: 2000,
+                    unit: 'sacas',
+                    humidity: 18.0,
+                    price: 87.00,
+                    negotiable: false,
+                    partialSale: false,
+                    city: 'Jaguarão',
+                    state: 'RS',
+                    freight: 'CIF',
+                    hasTransport: true,
+                    description: 'Preço fixo, entrega inclusa.',
+                    expiration: '2026-05-12',
+                    createdAt: '2026-03-08',
+                    status: 'active',
+                    views: 121,
+                    favorites: 10
+                },
+                {
+                    id: 'offer_10',
+                    producerId: 'user_4',
+                    variety: 'IRGA 424 RI',
+                    type: 'Tipo 1',
+                    quantity: 2000,
+                    unit: 'sacas',
+                    humidity: 17.0,
+                    price: 90.00,
+                    negotiable: true,
+                    partialSale: true,
+                    city: 'Jaguarão',
+                    state: 'RS',
+                    freight: 'FOB',
+                    hasTransport: true,
+                    description: 'Variedade resistente, qualidade premium.',
+                    expiration: '2026-05-18',
+                    createdAt: '2026-03-10',
+                    status: 'active',
+                    views: 187,
+                    favorites: 16
+                },
+                // Ofertas de Arroio Grande - 8 ofertas totalizando 60.000 sacas
+                {
+                    id: 'offer_11',
+                    producerId: 'user_5',
+                    variety: 'IRGA 424',
+                    type: 'Tipo 1',
+                    quantity: 8000,
+                    unit: 'sacas',
+                    humidity: 18.0,
+                    price: 86.00,
+                    negotiable: true,
+                    partialSale: true,
+                    city: 'Arroio Grande',
+                    state: 'RS',
+                    freight: 'FOB',
+                    hasTransport: true,
+                    description: 'Grande volume disponível, certificação orgânica.',
+                    expiration: '2026-06-01',
+                    createdAt: '2026-03-01',
+                    status: 'active',
+                    views: 312,
+                    favorites: 28
+                },
+                {
+                    id: 'offer_12',
+                    producerId: 'user_5',
+                    variety: 'BR-IRGA 409',
+                    type: 'Tipo 1',
+                    quantity: 8000,
+                    unit: 'sacas',
+                    humidity: 17.5,
+                    price: 84.50,
+                    negotiable: true,
+                    partialSale: true,
+                    city: 'Arroio Grande',
+                    state: 'RS',
+                    freight: 'CIF',
+                    hasTransport: true,
+                    description: 'Excelente oportunidade para grandes volumes.',
+                    expiration: '2026-05-28',
+                    createdAt: '2026-03-02',
+                    status: 'active',
+                    views: 289,
+                    favorites: 24
+                },
+                {
+                    id: 'offer_13',
+                    producerId: 'user_5',
+                    variety: 'IRGA 424 RI',
+                    type: 'Tipo 1',
+                    quantity: 7000,
+                    unit: 'sacas',
+                    humidity: 18.5,
+                    price: 89.00,
+                    negotiable: false,
+                    partialSale: false,
+                    city: 'Arroio Grande',
+                    state: 'RS',
+                    freight: 'FOB',
+                    hasTransport: true,
+                    description: 'Variedade premium, lote único.',
+                    expiration: '2026-06-05',
+                    createdAt: '2026-03-03',
+                    status: 'active',
+                    views: 245,
+                    favorites: 22
+                },
+                {
+                    id: 'offer_14',
+                    producerId: 'user_5',
+                    variety: 'IRGA 424',
+                    type: 'Tipo 2',
+                    quantity: 10000,
+                    unit: 'sacas',
+                    humidity: 19.0,
+                    price: 82.00,
+                    negotiable: true,
+                    partialSale: true,
+                    city: 'Arroio Grande',
+                    state: 'RS',
+                    freight: 'FOB',
+                    hasTransport: false,
+                    description: 'Melhor preço da região para volume grande.',
+                    expiration: '2026-05-25',
+                    createdAt: '2026-03-04',
+                    status: 'active',
+                    views: 356,
+                    favorites: 31
+                },
+                {
+                    id: 'offer_15',
+                    producerId: 'user_5',
+                    variety: 'GURI INTA CL',
+                    type: 'Tipo 1',
+                    quantity: 7500,
+                    unit: 'sacas',
+                    humidity: 18.0,
+                    price: 87.50,
+                    negotiable: true,
+                    partialSale: true,
+                    city: 'Arroio Grande',
+                    state: 'RS',
+                    freight: 'CIF',
+                    hasTransport: true,
+                    description: 'Variedade CL, excelente rendimento.',
+                    expiration: '2026-06-10',
+                    createdAt: '2026-03-05',
+                    status: 'active',
+                    views: 278,
+                    favorites: 26
+                },
+                {
+                    id: 'offer_16',
+                    producerId: 'user_5',
+                    variety: 'IRGA 424',
+                    type: 'Tipo 1',
+                    quantity: 6500,
+                    unit: 'sacas',
+                    humidity: 17.0,
+                    price: 88.00,
+                    negotiable: true,
+                    partialSale: false,
+                    city: 'Arroio Grande',
+                    state: 'RS',
+                    freight: 'FOB',
+                    hasTransport: true,
+                    description: 'Baixa umidade, armazenamento premium.',
+                    expiration: '2026-06-15',
+                    createdAt: '2026-03-06',
+                    status: 'active',
+                    views: 198,
+                    favorites: 19
+                },
+                {
+                    id: 'offer_17',
+                    producerId: 'user_5',
+                    variety: 'BR-IRGA 409',
+                    type: 'Tipo 1',
+                    quantity: 6000,
+                    unit: 'sacas',
+                    humidity: 18.5,
+                    price: 85.00,
+                    negotiable: true,
+                    partialSale: true,
+                    city: 'Arroio Grande',
+                    state: 'RS',
+                    freight: 'CIF',
+                    hasTransport: true,
+                    description: 'Ótimo custo-benefício.',
+                    expiration: '2026-06-08',
+                    createdAt: '2026-03-07',
+                    status: 'active',
+                    views: 234,
+                    favorites: 21
+                },
+                {
+                    id: 'offer_18',
+                    producerId: 'user_5',
+                    variety: 'IRGA 424',
+                    type: 'Tipo 1',
+                    quantity: 7000,
+                    unit: 'sacas',
+                    humidity: 18.0,
+                    price: 86.50,
+                    negotiable: false,
+                    partialSale: false,
+                    city: 'Arroio Grande',
+                    state: 'RS',
+                    freight: 'FOB',
+                    hasTransport: true,
+                    description: 'Preço fechado, pronta entrega.',
+                    expiration: '2026-06-12',
+                    createdAt: '2026-03-08',
+                    status: 'active',
+                    views: 267,
+                    favorites: 25
+                },
+                // Ofertas de Pelotas - 5 ofertas totalizando 40.000 sacas
+                {
+                    id: 'offer_19',
+                    producerId: 'user_6',
+                    variety: 'IRGA 424',
+                    type: 'Tipo 1',
+                    quantity: 8000,
+                    unit: 'sacas',
+                    humidity: 18.5,
+                    price: 87.00,
+                    negotiable: true,
+                    partialSale: true,
+                    city: 'Pelotas',
+                    state: 'RS',
+                    freight: 'FOB',
+                    hasTransport: true,
+                    description: 'Volume grande, qualidade garantida.',
+                    expiration: '2026-05-30',
+                    createdAt: '2026-03-09',
+                    status: 'active',
+                    views: 223,
+                    favorites: 20
+                },
+                {
+                    id: 'offer_20',
+                    producerId: 'user_6',
+                    variety: 'GURI INTA CL',
+                    type: 'Tipo 1',
+                    quantity: 8000,
+                    unit: 'sacas',
+                    humidity: 17.5,
+                    price: 88.50,
+                    negotiable: true,
+                    partialSale: false,
+                    city: 'Pelotas',
+                    state: 'RS',
+                    freight: 'CIF',
+                    hasTransport: true,
+                    description: 'Variedade CL, alta produtividade.',
+                    expiration: '2026-06-02',
+                    createdAt: '2026-03-10',
+                    status: 'active',
+                    views: 198,
+                    favorites: 18
+                },
+                {
+                    id: 'offer_21',
+                    producerId: 'user_6',
+                    variety: 'IRGA 424',
+                    type: 'Tipo 2',
+                    quantity: 8000,
+                    unit: 'sacas',
+                    humidity: 19.5,
+                    price: 83.00,
+                    negotiable: true,
+                    partialSale: true,
+                    city: 'Pelotas',
+                    state: 'RS',
+                    freight: 'FOB',
+                    hasTransport: false,
+                    description: 'Preço competitivo para grande volume.',
+                    expiration: '2026-05-28',
+                    createdAt: '2026-03-11',
+                    status: 'active',
+                    views: 176,
+                    favorites: 15
+                },
+                {
+                    id: 'offer_22',
+                    producerId: 'user_6',
+                    variety: 'BR-IRGA 409',
+                    type: 'Tipo 1',
+                    quantity: 8000,
+                    unit: 'sacas',
+                    humidity: 18.0,
+                    price: 86.00,
+                    negotiable: false,
+                    partialSale: false,
+                    city: 'Pelotas',
+                    state: 'RS',
+                    freight: 'CIF',
+                    hasTransport: true,
+                    description: 'Lote completo, entrega inclusa.',
+                    expiration: '2026-06-05',
+                    createdAt: '2026-03-12',
+                    status: 'active',
+                    views: 203,
+                    favorites: 17
+                },
+                {
+                    id: 'offer_23',
+                    producerId: 'user_6',
+                    variety: 'IRGA 424',
+                    type: 'Tipo 1',
+                    quantity: 8000,
+                    unit: 'sacas',
+                    humidity: 17.0,
+                    price: 89.00,
+                    negotiable: true,
+                    partialSale: true,
+                    city: 'Pelotas',
+                    state: 'RS',
+                    freight: 'FOB',
+                    hasTransport: true,
+                    description: 'Baixa umidade, qualidade premium.',
+                    expiration: '2026-06-08',
+                    createdAt: '2026-03-13',
+                    status: 'active',
+                    views: 245,
+                    favorites: 22
+                }
+            ];
+
+            // Sample Messages
+            const messages = [
+                {
+                    id: 'msg_1',
+                    chatId: 'chat_1',
+                    senderId: 'user_2',
+                    receiverId: 'user_1',
+                    offerId: 'offer_1',
+                    content: 'Olá João! Vi sua oferta de IRGA 424. Tenho interesse em discutir uma compra.',
+                    timestamp: '2026-03-07 09:15:00',
+                    read: true
+                },
+                {
+                    id: 'msg_2',
+                    chatId: 'chat_1',
+                    senderId: 'user_1',
+                    receiverId: 'user_2',
+                    offerId: 'offer_1',
+                    content: 'Bom dia! Seja bem-vindo. Estou à disposição para negociar. Qual quantidade você precisa?',
+                    timestamp: '2026-03-07 09:30:00',
+                    read: true
+                },
+                {
+                    id: 'msg_3',
+                    chatId: 'chat_1',
+                    senderId: 'user_2',
+                    receiverId: 'user_1',
+                    offerId: 'offer_1',
+                    content: 'Preciso de 300 sacas inicialmente. Consegue fazer R$ 86,00/saca?',
+                    timestamp: '2026-03-07 10:00:00',
+                    read: true
+                },
+                {
+                    id: 'msg_4',
+                    chatId: 'chat_1',
+                    senderId: 'user_1',
+                    receiverId: 'user_2',
+                    offerId: 'offer_1',
+                    content: 'Por 300 sacas consigo fazer R$ 87,00/saca. É um bom preço considerando a qualidade.',
+                    timestamp: '2026-03-07 10:15:00',
+                    read: false
+                }
+            ];
+
+            // Sample Chats
+            const chats = [
+                {
+                    id: 'chat_1',
+                    participants: ['user_1', 'user_2'],
+                    offerId: 'offer_1',
+                    lastMessage: 'Por 300 sacas consigo fazer R$ 87,00/saca. É um bom preço considerando a qualidade.',
+                    lastMessageTime: '2026-03-07 10:15:00',
+                    unreadCount: 1
+                }
+            ];
+
+            // Save to localStorage
+            localStorage.setItem('mercadoArroz_users', JSON.stringify(users));
+            localStorage.setItem('mercadoArroz_offers', JSON.stringify(offers));
+            localStorage.setItem('mercadoArroz_messages', JSON.stringify(messages));
+            localStorage.setItem('mercadoArroz_chats', JSON.stringify(chats));
+            localStorage.setItem('mercadoArroz_initialized', 'true');
+        }
+    }
+
+    // Load user session if exists
+    loadUserSession() {
+        const sessionUser = localStorage.getItem('mercadoArroz_currentUser');
+        if (sessionUser) {
+            this.currentUser = JSON.parse(sessionUser);
+        }
+    }
+
+    // Save user session
+    saveUserSession() {
+        if (this.currentUser) {
+            localStorage.setItem('mercadoArroz_currentUser', JSON.stringify(this.currentUser));
+        } else {
+            localStorage.removeItem('mercadoArroz_currentUser');
+        }
+    }
+
+    // Get users
+    getUsers() {
+        return JSON.parse(localStorage.getItem('mercadoArroz_users') || '[]');
+    }
+
+    // Get user by ID
+    getUserById(id) {
+        const users = this.getUsers();
+        return users.find(u => u.id === id);
+    }
+
+    // Get offers
+    getOffers() {
+        return JSON.parse(localStorage.getItem('mercadoArroz_offers') || '[]');
+    }
+
+    // Get offer by ID
+    getOfferById(id) {
+        const offers = this.getOffers();
+        return offers.find(o => o.id === id);
+    }
+
+    // Add new offer
+    addOffer(offerData) {
+        const offers = this.getOffers();
+        const newOffer = {
+            id: 'offer_' + Date.now(),
+            producerId: this.currentUser.id,
+            ...offerData,
+            createdAt: new Date().toISOString().split('T')[0],
+            status: 'active',
+            views: 0,
+            favorites: 0
+        };
+        offers.push(newOffer);
+        localStorage.setItem('mercadoArroz_offers', JSON.stringify(offers));
+        return newOffer;
+    }
+
+    // Update offer
+    updateOffer(offerId, updates) {
+        const offers = this.getOffers();
+        const offerIndex = offers.findIndex(o => o.id === offerId);
+        if (offerIndex !== -1) {
+            offers[offerIndex] = { ...offers[offerIndex], ...updates };
+            localStorage.setItem('mercadoArroz_offers', JSON.stringify(offers));
+            return offers[offerIndex];
+        }
+        return null;
+    }
+
+    // Delete offer
+    deleteOffer(offerId) {
+        const offers = this.getOffers();
+        const updatedOffers = offers.filter(o => o.id !== offerId);
+        localStorage.setItem('mercadoArroz_offers', JSON.stringify(updatedOffers));
+        return true;
+    }
+
+    // ==================== PROPOSALS MANAGEMENT ====================
+    
+    // Get all proposals
+    getProposals() {
+        return JSON.parse(localStorage.getItem('mercadoArroz_proposals') || '[]');
+    }
+    
+    // Get proposal by ID
+    getProposalById(id) {
+        const proposals = this.getProposals();
+        return proposals.find(p => p.id === id);
+    }
+    
+    // Get proposals for current user
+    getMyProposals() {
+        const proposals = this.getProposals();
+        
+        if (this.currentUser.type === 'producer') {
+            // Produtor vê propostas RECEBIDAS (de indústrias)
+            return proposals.filter(p => p.producerId === this.currentUser.id);
+        } else if (this.currentUser.type === 'industry') {
+            // Indústria vê propostas ENVIADAS (para produtores)
+            return proposals.filter(p => p.industryId === this.currentUser.id);
+        }
+        
+        return [];
+    }
+    
+    // Add new proposal
+    addProposal(proposalData) {
+        const proposals = this.getProposals();
+        const newProposal = {
+            id: 'prop_' + Date.now(),
+            ...proposalData,
+            createdAt: new Date().toISOString(),
+            status: 'pending' // pending, accepted, rejected, countered
+        };
+        proposals.push(newProposal);
+        localStorage.setItem('mercadoArroz_proposals', JSON.stringify(proposals));
+        return newProposal;
+    }
+    
+    // Update proposal status
+    updateProposalStatus(proposalId, status) {
+        const proposals = this.getProposals();
+        const proposalIndex = proposals.findIndex(p => p.id === proposalId);
+        if (proposalIndex !== -1) {
+            proposals[proposalIndex].status = status;
+            proposals[proposalIndex].updatedAt = new Date().toISOString();
+            localStorage.setItem('mercadoArroz_proposals', JSON.stringify(proposals));
+            return proposals[proposalIndex];
+        }
+        return null;
+    }
+
+    // Get my offers (current user's offers)
+    getMyOffers() {
+        if (!this.currentUser || this.currentUser.type !== 'producer') return [];
+        const offers = this.getOffers();
+        return offers.filter(o => o.producerId === this.currentUser.id);
+    }
+
+    // Check expiring offers (12 hours before expiration)
+    getExpiringOffers() {
+        const myOffers = this.getMyOffers();
+        const now = new Date();
+        const expiringOffers = [];
+        
+        myOffers.forEach(offer => {
+            if (offer.status === 'active') {
+                const expirationDate = new Date(offer.expiration);
+                const hoursUntilExpiration = (expirationDate - now) / (1000 * 60 * 60);
+                
+                if (hoursUntilExpiration > 0 && hoursUntilExpiration <= 12) {
+                    expiringOffers.push({
+                        ...offer,
+                        hoursUntilExpiration: Math.floor(hoursUntilExpiration)
+                    });
+                }
+            }
+        });
+        
+        return expiringOffers;
+    }
+
+    // Mark expired offers
+    updateExpiredOffers() {
+        const offers = this.getOffers();
+        const now = new Date();
+        let updated = false;
+        
+        offers.forEach(offer => {
+            if (offer.status === 'active') {
+                const expirationDate = new Date(offer.expiration);
+                if (now > expirationDate) {
+                    offer.status = 'expired';
+                    updated = true;
+                }
+            }
+        });
+        
+        if (updated) {
+            localStorage.setItem('mercadoArroz_offers', JSON.stringify(offers));
+        }
+    }
+
+    // Get messages
+    getMessages() {
+        return JSON.parse(localStorage.getItem('mercadoArroz_messages') || '[]');
+    }
+
+    // Get messages by chat ID
+    getMessagesByChatId(chatId) {
+        const messages = this.getMessages();
+        return messages.filter(m => m.chatId === chatId);
+    }
+
+    // Add message
+    addMessage(chatId, content, receiverId, offerId = null) {
+        const messages = this.getMessages();
+        const newMessage = {
+            id: 'msg_' + Date.now(),
+            chatId: chatId,
+            senderId: this.currentUser.id,
+            receiverId: receiverId,
+            offerId: offerId,
+            content: content,
+            timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+            read: false
+        };
+        messages.push(newMessage);
+        localStorage.setItem('mercadoArroz_messages', JSON.stringify(messages));
+        
+        // Update chat
+        this.updateChatLastMessage(chatId, content);
+        
+        return newMessage;
+    }
+
+    // Get chats
+    getChats() {
+        return JSON.parse(localStorage.getItem('mercadoArroz_chats') || '[]');
+    }
+
+    // Get chats for current user
+    getUserChats() {
+        const chats = this.getChats();
+        if (!this.currentUser) return [];
+        return chats.filter(c => c.participants.includes(this.currentUser.id));
+    }
+
+    // Update chat last message
+    updateChatLastMessage(chatId, message) {
+        const chats = this.getChats();
+        const chat = chats.find(c => c.id === chatId);
+        if (chat) {
+            chat.lastMessage = message;
+            chat.lastMessageTime = new Date().toISOString().replace('T', ' ').substring(0, 19);
+            localStorage.setItem('mercadoArroz_chats', JSON.stringify(chats));
+        }
+    }
+
+    // Initialize app
+    initializeApp() {
+        this.initializeEventListeners();
+        this.initializeNavigation();
+        this.renderInitialPage();
+        
+        // Check expiring offers every hour
+        if (this.currentUser && this.currentUser.type === 'producer') {
+            this.checkExpiringOffersNotification();
+            setInterval(() => {
+                this.checkExpiringOffersNotification();
+            }, 3600000); // Every hour
+        }
+    }
+
+    // Check and show notification for expiring offers
+    checkExpiringOffersNotification() {
+        const expiringOffers = this.getExpiringOffers();
+        if (expiringOffers.length > 0) {
+            const message = expiringOffers.length === 1 
+                ? 'Você tem 1 oferta expirando nas próximas 12 horas!' 
+                : `Você tem ${expiringOffers.length} ofertas expirando nas próximas 12 horas!`;
+            
+            // Show toast notification
+            setTimeout(() => {
+                this.showToast(message, 5000);
+            }, 1000);
+        }
+    }
+
+    // Initialize event listeners
+    initializeEventListeners() {
+        // Navigation items
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = item.getAttribute('data-page');
+                if (page) {
+                    this.navigateTo(page);
+                }
+            });
+        });
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.getAttribute('data-tab');
+                this.switchTab(tabName);
+            });
+        });
+
+        // Close modals on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.closeModal(modal.id);
+                }
+            });
+        });
+    }
+
+    // Initialize navigation
+    initializeNavigation() {
+        if (this.currentUser) {
+            if (this.currentUser.type === 'producer') {
+                this.navigateTo('dashboard-producer');
+            } else {
+                this.navigateTo('dashboard-industry');
+            }
+        } else {
+            this.navigateTo('landing');
+        }
+    }
+
+    // Render initial page
+    renderInitialPage() {
+        if (this.currentUser) {
+            this.renderDashboard();
+        }
+    }
+
+    // Navigate to page
+    navigateTo(pageName) {
+        // Hide all pages
+        document.querySelectorAll('.page').forEach(page => {
+            page.classList.remove('active');
+        });
+
+        // Show target page
+        const targetPage = document.getElementById('page-' + pageName);
+        if (targetPage) {
+            targetPage.classList.add('active');
+            this.currentPage = pageName;
+
+            // Update active nav item
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('data-page') === pageName) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Render page content
+            this.renderPageContent(pageName);
+        }
+
+        // Close mobile menu if open
+        this.closeMobileMenu();
+        this.closeSidebar();
+    }
+
+    // Render page content
+    renderPageContent(pageName) {
+        // Render dynamic sidebars for shared pages
+        if (pageName === 'negotiations' || pageName === 'chat' || pageName === 'profile') {
+            this.renderDynamicSidebar(pageName);
+        }
+        
+        switch(pageName) {
+            case 'dashboard-producer':
+            case 'dashboard-industry':
+                this.renderDashboard();
+                break;
+            case 'my-offers':
+                this.renderMyOffers();
+                break;
+            case 'search-offers':
+                this.renderOffers();
+                break;
+            case 'map-offers':
+                this.renderMap();
+                break;
+            case 'negotiations':
+                this.renderNegotiations();
+                break;
+            case 'chat':
+                this.renderChat();
+                break;
+            case 'profile':
+                this.renderProfile();
+                break;
+            case 'create-offer':
+                // Preencher localização automaticamente
+                setTimeout(() => fillLocationFromProfile(), 100);
+                break;
+            default:
+                break;
+        }
+    }
+    
+    // Render dynamic sidebar based on user type
+    renderDynamicSidebar(pageName) {
+        let navId;
+        if (pageName === 'negotiations') {
+            navId = 'negotiationsSidebarNav';
+        } else if (pageName === 'chat') {
+            navId = 'chatSidebarNav';
+        } else if (pageName === 'profile') {
+            navId = 'profileSidebarNav';
+        }
+        
+        const navElement = document.getElementById(navId);
+        
+        if (!navElement) return;
+        
+        const userType = this.currentUser ? this.currentUser.type : 'producer';
+        const isProducer = userType === 'producer';
+        const dashboardPage = isProducer ? 'dashboard-producer' : 'dashboard-industry';
+        
+        let menuHTML = '';
+        
+        if (isProducer) {
+            // Menu do Produtor
+            menuHTML = `
+                <a href="#" class="nav-item" data-page="dashboard-producer">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-page="active-industries">
+                    <i class="fas fa-industry"></i>
+                    <span>Indústrias Ativas</span>
+                </a>
+                <a href="#" class="nav-item" data-page="my-offers">
+                    <i class="fas fa-box"></i>
+                    <span>Minhas Ofertas</span>
+                </a>
+                <a href="#" class="nav-item" data-page="create-offer">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Nova Oferta</span>
+                </a>
+                <a href="#" class="nav-item ${pageName === 'negotiations' ? 'active' : ''}" data-page="negotiations">
+                    <i class="fas fa-handshake"></i>
+                    <span>Negociações</span>
+                    <span class="badge">3</span>
+                </a>
+                <a href="#" class="nav-item ${pageName === 'chat' ? 'active' : ''}" data-page="chat">
+                    <i class="fas fa-comments"></i>
+                    <span>Mensagens</span>
+                    <span class="badge">5</span>
+                </a>
+                <a href="#" class="nav-item" data-page="profile">
+                    <i class="fas fa-user"></i>
+                    <span>Meu Perfil</span>
+                </a>
+            `;
+        } else {
+            // Menu da Indústria
+            menuHTML = `
+                <a href="#" class="nav-item" data-page="dashboard-industry">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-page="search-offers">
+                    <i class="fas fa-search"></i>
+                    <span>Buscar Ofertas</span>
+                </a>
+                <a href="#" class="nav-item" data-page="map-offers">
+                    <i class="fas fa-map"></i>
+                    <span>Mapa de Ofertas</span>
+                </a>
+                <a href="#" class="nav-item" data-page="my-purchases">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Minhas Compras</span>
+                </a>
+                <a href="#" class="nav-item ${pageName === 'negotiations' ? 'active' : ''}" data-page="negotiations">
+                    <i class="fas fa-handshake"></i>
+                    <span>Negociações</span>
+                    <span class="badge">2</span>
+                </a>
+                <a href="#" class="nav-item ${pageName === 'chat' ? 'active' : ''}" data-page="chat">
+                    <i class="fas fa-comments"></i>
+                    <span>Mensagens</span>
+                    <span class="badge">3</span>
+                </a>
+                <a href="#" class="nav-item" data-page="profile">
+                    <i class="fas fa-user"></i>
+                    <span>Meu Perfil</span>
+                </a>
+            `;
+        }
+        
+        navElement.innerHTML = menuHTML;
+        
+        // Adicionar event listeners aos novos itens de navegação
+        navElement.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = item.getAttribute('data-page');
+                if (page) {
+                    this.navigateTo(page);
+                }
+            });
+        });
+        
+        // Update user info in topbar
+        this.updatePageUserInfo(pageName);
+    }
+    
+    // Update user info display in shared pages
+    updatePageUserInfo(pageName) {
+        const userInfoId = pageName === 'negotiations' ? 'negotiationsUserInfo' : 'chatUserInfo';
+        const userInfoElement = document.getElementById(userInfoId);
+        
+        if (userInfoElement && this.currentUser) {
+            const userName = this.currentUser.name || 'Usuário';
+            const userRole = this.currentUser.type === 'producer' ? 'Produtor' : 'Indústria';
+            
+            userInfoElement.innerHTML = `
+                <span class="user-name">${userName}</span>
+                <span class="user-role">${userRole}</span>
+            `;
+        }
+    }
+
+    // Render dashboard
+    renderDashboard() {
+        // if (this.currentUser && this.currentUser.type === 'industry') {
+        //     this.renderRecommendedOffers(); // Removed: section no longer exists
+        // }
+        this.renderCharts();
+        
+        // Render Top 5 Cities for industry dashboard
+        if (this.currentUser && this.currentUser.type === 'industry') {
+            this.renderTopCities();
+        }
+    }
+
+    // Render top 5 cities with most offers
+    renderTopCities() {
+        const container = document.getElementById('topCitiesList');
+        if (!container) return;
+
+        const offers = this.getOffers().filter(offer => offer.status === 'active');
+        
+        // Count offers by city
+        const cityCounts = {};
+        offers.forEach(offer => {
+            const cityKey = `${offer.city}, ${offer.state}`;
+            if (!cityCounts[cityKey]) {
+                cityCounts[cityKey] = {
+                    city: offer.city,
+                    state: offer.state,
+                    count: 0,
+                    totalQuantity: 0
+                };
+            }
+            cityCounts[cityKey].count++;
+            cityCounts[cityKey].totalQuantity += offer.quantity;
+        });
+
+        // Convert to array and sort by count
+        const topCities = Object.values(cityCounts)
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5);
+
+        // Render top cities
+        if (topCities.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: var(--color-gray-500);">
+                    <i class="fas fa-map-marker-alt" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <p>Nenhuma oferta disponível no momento</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = topCities.map((cityData, index) => {
+            const colors = [
+                '#5F6C37', // 1º - Primary green
+                '#7A8A4D', // 2º - Lighter green
+                '#95A563', // 3º - Even lighter
+                '#B0C079', // 4º - Light green
+                '#CBD98F'  // 5º - Lightest green
+            ];
+            const color = colors[index];
+            
+            return `
+                <div style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0.75rem; background-color: var(--color-gray-50); border-radius: var(--radius-md); border-top: 3px solid ${color}; transition: all 0.3s ease; cursor: pointer;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 12px rgba(0,0,0,0.08)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';" onclick="app.filterOffersByCity('${cityData.city}', '${cityData.state}')">
+                    <div style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background-color: ${color}; border-radius: 50%; color: white; font-weight: 700; font-size: 0.875rem; margin-bottom: 0.5rem; box-shadow: 0 2px 6px ${color}40;">
+                        ${index + 1}º
+                    </div>
+                    <div style="margin-bottom: 0.5rem;">
+                        <i class="fas fa-map-marker-alt" style="color: ${color}; font-size: 0.875rem; margin-bottom: 0.25rem;"></i>
+                        <h4 style="margin: 0.25rem 0 0 0; font-size: 0.813rem; font-weight: 600; color: var(--color-text); line-height: 1.2;">
+                            ${cityData.city}
+                        </h4>
+                        <p style="margin: 0.125rem 0 0 0; font-size: 0.688rem; color: var(--color-gray-600);">${cityData.state}</p>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; width: 100%; padding-top: 0.5rem; border-top: 1px solid var(--color-gray-200);">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 0.25rem; font-size: 0.688rem; color: var(--color-gray-700);">
+                            <i class="fas fa-box" style="color: ${color}; font-size: 0.688rem;"></i>
+                            <strong style="font-size: 0.875rem; color: var(--color-text);">${cityData.count}</strong>
+                            <span style="font-size: 0.688rem;">${cityData.count === 1 ? 'oferta' : 'ofertas'}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 0.25rem; font-size: 0.688rem; color: var(--color-gray-700);">
+                            <i class="fas fa-weight-hanging" style="color: ${color}; font-size: 0.688rem;"></i>
+                            <strong style="font-size: 0.875rem; color: var(--color-text);">${cityData.totalQuantity.toLocaleString('pt-BR')}</strong>
+                            <span style="font-size: 0.688rem;">sacas</span>
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="event.stopPropagation(); app.filterOffersByCity('${cityData.city}', '${cityData.state}')" style="margin-top: 0.5rem; width: 100%; font-size: 0.688rem; padding: 0.375rem 0.5rem; background-color: ${color}; border-color: ${color};">
+                        <i class="fas fa-search"></i> Ver
+                    </button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Filter offers by city
+    filterOffersByCity(city, state) {
+        this.navigateTo('search-offers');
+        setTimeout(() => {
+            const searchInput = document.getElementById('offerSearch');
+            if (searchInput) {
+                searchInput.value = `${city}, ${state}`;
+                this.renderOffers({ search: `${city}, ${state}` });
+            }
+        }, 100);
+    }
+
+    // Render recommended offers for industry
+    renderRecommendedOffers() {
+        const container = document.getElementById('recommendedOffers');
+        if (!container) return;
+
+        const offers = this.getOffers().slice(0, 3);
+        const users = this.getUsers();
+
+        container.innerHTML = offers.map(offer => {
+            const producer = users.find(u => u.id === offer.producerId);
+            return this.renderOfferCard(offer, producer);
+        }).join('');
+
+        // Add click listeners
+        container.querySelectorAll('.offer-card').forEach((card, index) => {
+            card.addEventListener('click', () => {
+                this.showOfferDetail(offers[index]);
+            });
+        });
+    }
+
+    // Render offer card
+    renderOfferCard(offer, producer) {
+        // Verificar se o usuário é indústria e se a view é lista
+        const isIndustry = this.currentUser && this.currentUser.type === 'industry';
+        const offersGrid = document.getElementById('offersGrid');
+        const isListView = offersGrid && offersGrid.classList.contains('list-view');
+        
+        // Botões de ação para indústria em visualização de lista
+        const actionButtons = (isIndustry && isListView) ? `
+            <div class="offer-actions">
+                <button class="btn-primary" onclick="event.stopPropagation(); app.sendProposal('${offer.id}')" style="white-space: nowrap; padding: 0.75rem 1.5rem;">
+                    <i class="fas fa-paper-plane"></i> Enviar Proposta
+                </button>
+                <button class="btn-secondary" onclick="event.stopPropagation(); app.toggleFavorite('${offer.id}')" style="white-space: nowrap; padding: 0.75rem 1.5rem;">
+                    <i class="far fa-heart"></i> Favoritar
+                </button>
+            </div>
+        ` : '';
+        
+        return `
+            <div class="offer-card" data-offer-id="${offer.id}">
+                <img src="https://via.placeholder.com/400x200/5F6C37/FEFADF?text=${encodeURIComponent(offer.variety)}" 
+                     alt="${offer.variety}" 
+                     class="offer-image">
+                <div class="offer-content">
+                    <div class="offer-info">
+                        <div class="offer-header">
+                            <h3 class="offer-title">${offer.variety}</h3>
+                            <span class="offer-badge">${offer.type}</span>
+                        </div>
+                        <p class="offer-price">
+                            R$ ${offer.price.toFixed(2)}<span>/saca</span>
+                        </p>
+                        <div class="offer-details">
+                            <div class="offer-detail">
+                                <i class="fas fa-box"></i>
+                                <span>${offer.quantity} ${offer.unit}</span>
+                            </div>
+                            <div class="offer-detail">
+                                <i class="fas fa-tint"></i>
+                                <span>Umidade: ${offer.humidity}%</span>
+                            </div>
+                            <div class="offer-detail">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>${offer.city}, ${offer.state}</span>
+                            </div>
+                            <div class="offer-detail">
+                                <i class="fas fa-truck"></i>
+                                <span>${offer.freight}</span>
+                            </div>
+                        </div>
+                        ${!isListView ? `
+                        <div class="offer-footer">
+                            <div class="offer-producer">
+                                <div class="user-avatar small">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="producer-info">
+                                    <span class="producer-name">${producer ? producer.name : 'Produtor'}</span>
+                                    <span class="producer-rating">
+                                        <i class="fas fa-star"></i> ${producer ? producer.rating : '0.0'}
+                                    </span>
+                                </div>
+                            </div>
+                            <button class="btn-favorite" onclick="event.stopPropagation(); app.toggleFavorite('${offer.id}')">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        ` : ''}
+                    </div>
+                    ${actionButtons}
+                </div>
+            </div>
+        `;
+    }
+
+    // Render all offers
+    renderOffers(filters = {}) {
+        const container = document.getElementById('offersGrid');
+        if (!container) return;
+
+        let offers = this.getOffers();
+        const users = this.getUsers();
+        
+        // Apply filters
+        offers = this.filterOffers(offers, filters);
+
+        // Update results count
+        const resultsCount = document.getElementById('resultsCount');
+        if (resultsCount) {
+            resultsCount.textContent = `${offers.length} ${offers.length === 1 ? 'oferta encontrada' : 'ofertas encontradas'}`;
+        }
+
+        container.innerHTML = offers.map(offer => {
+            const producer = users.find(u => u.id === offer.producerId);
+            return this.renderOfferCard(offer, producer);
+        }).join('');
+
+        // Add click listeners
+        container.querySelectorAll('.offer-card').forEach(card => {
+            const offerId = card.getAttribute('data-offer-id');
+            const offer = offers.find(o => o.id === offerId);
+            if (offer) {
+                card.addEventListener('click', () => {
+                    this.showOfferDetail(offer);
+                });
+            }
+        });
+    }
+    
+    // Filter offers based on criteria
+    filterOffers(offers, filters) {
+        let filtered = offers.filter(offer => offer.status === 'active');
+        
+        // Filter by search text
+        if (filters.search) {
+            const searchLower = filters.search.toLowerCase();
+            filtered = filtered.filter(offer => 
+                offer.variety.toLowerCase().includes(searchLower) ||
+                offer.city.toLowerCase().includes(searchLower) ||
+                offer.state.toLowerCase().includes(searchLower) ||
+                offer.type.toLowerCase().includes(searchLower)
+            );
+        }
+        
+        // Filter by state
+        if (filters.state) {
+            filtered = filtered.filter(offer => offer.state === filters.state);
+        }
+        
+        // Filter by variety
+        if (filters.variety) {
+            filtered = filtered.filter(offer => offer.variety === filters.variety);
+        }
+        
+        // Filter by type
+        if (filters.type) {
+            filtered = filtered.filter(offer => offer.type === filters.type);
+        }
+        
+        // Filter by price range
+        if (filters.priceMin) {
+            filtered = filtered.filter(offer => offer.price >= parseFloat(filters.priceMin));
+        }
+        if (filters.priceMax) {
+            filtered = filtered.filter(offer => offer.price <= parseFloat(filters.priceMax));
+        }
+        
+        // Filter by minimum quantity
+        if (filters.quantityMin) {
+            filtered = filtered.filter(offer => offer.quantity >= parseInt(filters.quantityMin));
+        }
+        
+        // Filter by maximum humidity
+        if (filters.humidity) {
+            filtered = filtered.filter(offer => offer.humidity <= parseFloat(filters.humidity));
+        }
+        
+        // Apply sorting
+        if (filters.sortBy) {
+            filtered = this.sortOffers(filtered, filters.sortBy);
+        }
+        
+        return filtered;
+    }
+    
+    // Sort offers
+    sortOffers(offers, sortBy) {
+        const sorted = [...offers];
+        
+        switch(sortBy) {
+            case 'recent':
+                sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                break;
+            case 'price-low':
+                sorted.sort((a, b) => a.price - b.price);
+                break;
+            case 'price-high':
+                sorted.sort((a, b) => b.price - a.price);
+                break;
+            case 'quantity-high':
+                sorted.sort((a, b) => b.quantity - a.quantity);
+                break;
+            default:
+                // Keep original order
+                break;
+        }
+        
+        return sorted;
+    }
+
+    // Render my offers page
+    renderMyOffers(filter = 'all') {
+        // Update expired offers first
+        this.updateExpiredOffers();
+        
+        const myOffers = this.getMyOffers();
+        let filteredOffers = myOffers;
+
+        // Apply filter
+        if (filter === 'active') {
+            filteredOffers = myOffers.filter(o => o.status === 'active');
+        } else if (filter === 'expiring') {
+            const expiringOffers = this.getExpiringOffers();
+            filteredOffers = expiringOffers;
+        } else if (filter === 'expired') {
+            filteredOffers = myOffers.filter(o => o.status === 'expired');
+        }
+
+        // Update stats
+        this.updateMyOffersStats(myOffers);
+
+        // Show expiring alerts
+        this.showExpiringAlertsMyOffers();
+
+        // Render offers grid
+        const container = document.getElementById('myOffersGrid');
+        const emptyState = document.getElementById('myOffersEmptyState');
+        
+        if (!container || !emptyState) return;
+
+        if (filteredOffers.length === 0) {
+            container.style.display = 'none';
+            emptyState.style.display = 'block';
+        } else {
+            container.style.display = 'grid';
+            emptyState.style.display = 'none';
+            
+            container.innerHTML = filteredOffers.map(offer => {
+                return this.renderMyOfferCard(offer);
+            }).join('');
+        }
+
+        // Update filter buttons
+        ['All', 'Active', 'Expiring', 'Expired'].forEach(f => {
+            const btn = document.getElementById('filter' + f);
+            if (btn) {
+                if (f.toLowerCase() === filter) {
+                    btn.style.backgroundColor = 'var(--color-primary)';
+                    btn.style.color = 'var(--color-white)';
+                } else {
+                    btn.style.backgroundColor = 'var(--color-white)';
+                    btn.style.color = 'var(--color-primary)';
+                }
+            }
+        });
+        
+        // Restore view preference
+        const savedView = localStorage.getItem('myOffersViewPreference') || 'grid';
+        const gridBtn = document.getElementById('myOffersViewGrid');
+        const listBtn = document.getElementById('myOffersViewList');
+        
+        if (savedView === 'list') {
+            container.classList.add('list-view');
+            if (gridBtn) gridBtn.classList.remove('active');
+            if (listBtn) listBtn.classList.add('active');
+        } else {
+            container.classList.remove('list-view');
+            if (gridBtn) gridBtn.classList.add('active');
+            if (listBtn) listBtn.classList.remove('active');
+        }
+    }
+
+    // Update my offers stats
+    updateMyOffersStats(offers) {
+        const activeCount = offers.filter(o => o.status === 'active').length;
+        const totalViews = offers.reduce((sum, o) => sum + (o.views || 0), 0);
+        const totalFavorites = offers.reduce((sum, o) => sum + (o.favorites || 0), 0);
+        const expiringCount = this.getExpiringOffers().length;
+
+        const activeEl = document.getElementById('myOffersActiveCount');
+        const viewsEl = document.getElementById('myOffersTotalViews');
+        const favoritesEl = document.getElementById('myOffersTotalFavorites');
+        const expiringEl = document.getElementById('myOffersExpiringCount');
+
+        if (activeEl) activeEl.textContent = activeCount;
+        if (viewsEl) viewsEl.textContent = totalViews;
+        if (favoritesEl) favoritesEl.textContent = totalFavorites;
+        if (expiringEl) expiringEl.textContent = expiringCount;
+    }
+
+    // Show expiring alerts on my offers page
+    showExpiringAlertsMyOffers() {
+        const expiringOffers = this.getExpiringOffers();
+        const alertContainer = document.getElementById('expiringOffersAlert');
+        const contentContainer = document.getElementById('expiringOffersContent');
+
+        if (!alertContainer || !contentContainer) return;
+
+        if (expiringOffers.length > 0) {
+            alertContainer.style.display = 'flex';
+            contentContainer.innerHTML = expiringOffers.map(offer => {
+                const hoursText = offer.hoursUntilExpiration === 1 ? '1 hora' : `${offer.hoursUntilExpiration} horas`;
+                return `
+                    <div style="padding: 0.75rem 0; border-bottom: 1px solid rgba(0,0,0,0.1);">
+                        <strong>${offer.variety} - ${offer.type}</strong> 
+                        expira em <strong style="color: #FF9800;">${hoursText}</strong>
+                        <button onclick="app.openManageOfferModal('${offer.id}')" 
+                                style="margin-left: 1rem; padding: 0.25rem 0.75rem; background-color: #273617; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.813rem;">
+                            <i class="fas fa-edit"></i> Gerenciar
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            alertContainer.style.display = 'none';
+        }
+    }
+
+    // Render my offer card
+    renderMyOfferCard(offer) {
+        const now = new Date();
+        const expirationDate = new Date(offer.expiration);
+        const daysUntilExpiration = Math.ceil((expirationDate - now) / (1000 * 60 * 60 * 24));
+        
+        let statusBadge = '';
+        let statusClass = '';
+        
+        if (offer.status === 'expired') {
+            statusBadge = '<span class="offer-badge" style="background-color: var(--color-error);">Expirada</span>';
+            statusClass = 'opacity: 0.6;';
+        } else if (daysUntilExpiration <= 1) {
+            statusBadge = '<span class="offer-badge" style="background-color: var(--color-error);">Expira hoje!</span>';
+        } else if (daysUntilExpiration <= 3) {
+            statusBadge = '<span class="offer-badge" style="background-color: var(--color-warning);">Expira em ' + daysUntilExpiration + ' dias</span>';
+        } else {
+            statusBadge = '<span class="offer-badge" style="background-color: var(--color-success);">Ativa</span>';
+        }
+
+        return `
+            <div class="offer-card" style="${statusClass}">
+                <img src="https://via.placeholder.com/400x200/5F6C37/FEFADF?text=${encodeURIComponent(offer.variety)}" 
+                     alt="${offer.variety}" 
+                     class="offer-image">
+                <div class="offer-content">
+                    <div class="offer-header">
+                        <h3 class="offer-title">${offer.variety}</h3>
+                        ${statusBadge}
+                    </div>
+                    <div class="offer-info">
+                        <p class="offer-price">
+                            R$ ${offer.price.toFixed(2)}<span>/saca</span>
+                        </p>
+                        <div class="offer-details">
+                            <div class="offer-detail">
+                                <i class="fas fa-box"></i>
+                                <span>${offer.quantity} ${offer.unit}</span>
+                            </div>
+                            <div class="offer-detail">
+                                <i class="fas fa-tint"></i>
+                                <span>Umidade: ${offer.humidity}%</span>
+                            </div>
+                            <div class="offer-detail">
+                                <i class="fas fa-eye"></i>
+                                <span>${offer.views || 0} visualizações</span>
+                            </div>
+                            <div class="offer-detail">
+                                <i class="fas fa-calendar"></i>
+                                <span>Expira: ${new Date(offer.expiration).toLocaleDateString('pt-BR')}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="offer-footer" style="border-top: 1px solid var(--color-gray-200); padding-top: 1rem; margin-top: 1rem;">
+                        <div class="offer-actions">
+                            <button class="btn-secondary btn-sm" onclick="event.stopPropagation(); app.openManageOfferModal('${offer.id}')">
+                                <i class="fas fa-cog"></i> Gerenciar
+                            </button>
+                            <button class="btn-primary btn-sm" onclick="event.stopPropagation(); app.showOfferDetail(app.getOfferById('${offer.id}'))">
+                                <i class="fas fa-eye"></i> Ver Detalhes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Filter my offers
+    filterMyOffers(filter) {
+        this.renderMyOffers(filter);
+    }
+    
+    // Render negotiations based on user type
+    renderNegotiations() {
+        const container = document.getElementById('negotiationsContainer');
+        const title = document.getElementById('negotiationsTitle');
+        const emptyState = document.getElementById('negotiationsEmptyState');
+        const emptyMessage = document.getElementById('emptyStateMessage');
+        
+        if (!container) {
+            console.warn('negotiationsContainer not found');
+            return;
+        }
+        
+        if (!this.currentUser) {
+            console.error('No current user found');
+            return;
+        }
+        
+        try {
+            const proposals = this.getMyProposals();
+            console.log('Proposals loaded:', proposals.length);
+            
+            if (this.currentUser.type === 'industry') {
+                // INDÚSTRIA: Mostrar propostas ENVIADAS para produtores
+                if (title) title.textContent = 'Minhas Propostas Enviadas';
+                
+                if (proposals.length === 0) {
+                    container.style.display = 'none';
+                    if (emptyState) emptyState.style.display = 'block';
+                    if (emptyMessage) emptyMessage.textContent = 'Você ainda não enviou propostas para produtores.';
+                    return;
+                }
+                
+                container.innerHTML = proposals.map(proposal => {
+                    const offer = this.getOfferById(proposal.offerId);
+                    const producer = this.getUserById(proposal.producerId);
+                    const statusInfo = this.getProposalStatusInfo(proposal.status);
+                    
+                    // Validação extra para evitar erros
+                    const offerPrice = offer && offer.price ? offer.price.toFixed(2) : '0.00';
+                    const offerVariety = offer && offer.variety ? offer.variety : 'N/A';
+                    const offerType = offer && offer.type ? offer.type : '';
+                    const producerName = producer && producer.name ? producer.name : 'Produtor';
+                    
+                    return `
+                        <div class="negotiation-card ${proposal.status}" style="border: 1px solid var(--color-gray-200); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1rem; background-color: var(--color-white);">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                                <div>
+                                    <h4 style="font-size: 1.125rem; font-weight: 600; color: var(--color-primary); margin-bottom: 0.5rem;">
+                                        <i class="fas fa-user"></i> ${producerName}
+                                    </h4>
+                                    <p style="color: var(--color-gray-600); font-size: 0.875rem;">
+                                        <i class="fas fa-clock"></i> ${this.formatTimeAgo(proposal.createdAt)}
+                                    </p>
+                                </div>
+                                <span class="badge" style="background-color: ${statusInfo.bgColor}; color: ${statusInfo.textColor}; padding: 0.5rem 1rem; border-radius: var(--radius-md);">
+                                    <i class="fas ${statusInfo.icon}"></i> ${statusInfo.label}
+                                </span>
+                            </div>
+                            <div style="background-color: var(--color-gray-50); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+                                <p style="margin-bottom: 0.5rem;"><strong>Oferta:</strong> ${offerVariety} - ${offerType}</p>
+                                <p style="margin-bottom: 0.5rem;"><strong>Preço do produtor:</strong> R$ ${offerPrice}/saca</p>
+                                <p style="margin-bottom: 0.5rem;"><strong>Sua proposta:</strong> <span style="color: var(--color-primary); font-weight: 600;">R$ ${proposal.proposedPrice.toFixed(2)}/saca</span></p>
+                                <p style="margin-bottom: 0;"><strong>Quantidade:</strong> ${proposal.quantity} sacas</p>
+                            </div>
+                            ${proposal.message ? `
+                            <div style="background-color: #F8F9FA; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem; border-left: 3px solid var(--color-info);">
+                                <p style="font-size: 0.875rem; color: var(--color-gray-700); margin: 0;">
+                                    <i class="fas fa-comment"></i> "${proposal.message}"
+                                </p>
+                            </div>
+                            ` : ''}
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                ${proposal.status === 'pending' ? `
+                                    <button class="btn-secondary" onclick="app.navigateTo('chat')">
+                                        <i class="fas fa-comments"></i> Conversar com Produtor
+                                    </button>
+                                    <button class="btn-secondary" onclick="app.showToast('Em desenvolvimento')">
+                                        <i class="fas fa-eye"></i> Ver Oferta Completa
+                                    </button>
+                                ` : proposal.status === 'accepted' ? `
+                                    <button class="btn-primary" onclick="app.navigateTo('chat')">
+                                        <i class="fas fa-comments"></i> Conversar
+                                    </button>
+                                    <button class="btn-secondary" onclick="app.showToast('Em desenvolvimento')">
+                                        <i class="fas fa-eye"></i> Ver Detalhes
+                                    </button>
+                                ` : `
+                                    <button class="btn-secondary" onclick="app.showToast('Em desenvolvimento')">
+                                        <i class="fas fa-eye"></i> Ver Detalhes
+                                    </button>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                container.style.display = 'block';
+                if (emptyState) emptyState.style.display = 'none';
+                
+            } else {
+                // PRODUTOR: Mostrar propostas RECEBIDAS de indústrias
+                if (title) title.textContent = 'Propostas Recebidas';
+                
+                if (proposals.length === 0) {
+                    container.style.display = 'none';
+                    if (emptyState) emptyState.style.display = 'block';
+                    if (emptyMessage) emptyMessage.textContent = 'Você ainda não recebeu propostas para suas ofertas.';
+                    return;
+                }
+                
+                container.innerHTML = proposals.map(proposal => {
+                    const offer = this.getOfferById(proposal.offerId);
+                    const industry = this.getUserById(proposal.industryId);
+                    const statusInfo = this.getProposalStatusInfo(proposal.status);
+                    
+                    // Validação extra para evitar erros
+                    const offerPrice = offer && offer.price ? offer.price : 0;
+                    const offerVariety = offer && offer.variety ? offer.variety : 'N/A';
+                    const offerType = offer && offer.type ? offer.type : '';
+                    const industryName = industry && industry.name ? industry.name : 'Indústria';
+                    
+                    return `
+                        <div class="negotiation-card ${proposal.status}" style="border: 1px solid var(--color-gray-200); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1rem; background-color: var(--color-white);">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                                <div>
+                                    <h4 style="font-size: 1.125rem; font-weight: 600; color: var(--color-primary); margin-bottom: 0.5rem;">
+                                        <i class="fas fa-building"></i> ${industryName}
+                                    </h4>
+                                    <p style="color: var(--color-gray-600); font-size: 0.875rem;">
+                                        <i class="fas fa-clock"></i> ${this.formatTimeAgo(proposal.createdAt)}
+                                    </p>
+                                </div>
+                                <span class="badge" style="background-color: ${statusInfo.bgColor}; color: ${statusInfo.textColor}; padding: 0.5rem 1rem; border-radius: var(--radius-md);">
+                                    <i class="fas ${statusInfo.icon}"></i> ${statusInfo.label}
+                                </span>
+                            </div>
+                            <div style="background-color: var(--color-gray-50); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+                                <p style="margin-bottom: 0.5rem;"><strong>Oferta:</strong> ${offerVariety} - ${offerType}</p>
+                                <p style="margin-bottom: 0.5rem;"><strong>Seu preço:</strong> R$ ${offerPrice.toFixed(2)}/saca</p>
+                                <p style="margin-bottom: 0.5rem;"><strong>Proposta da indústria:</strong> <span style="color: ${proposal.proposedPrice >= offerPrice ? 'var(--color-success)' : 'var(--color-warning)'}; font-weight: 600;">R$ ${proposal.proposedPrice.toFixed(2)}/saca</span></p>
+                                <p style="margin-bottom: 0;"><strong>Quantidade:</strong> ${proposal.quantity} sacas</p>
+                            </div>
+                            ${proposal.message ? `
+                            <div style="background-color: #F8F9FA; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem; border-left: 3px solid var(--color-info);">
+                                <p style="font-size: 0.875rem; color: var(--color-gray-700); margin: 0;">
+                                    <i class="fas fa-comment"></i> "${proposal.message}"
+                                </p>
+                            </div>
+                            ` : ''}
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                ${proposal.status === 'pending' ? `
+                                    <button class="btn-primary" onclick="app.showToast('Em desenvolvimento')">
+                                        <i class="fas fa-check"></i> Aceitar Proposta
+                                    </button>
+                                    <button class="btn-secondary" onclick="app.showToast('Em desenvolvimento')">
+                                        <i class="fas fa-exchange-alt"></i> Fazer Contraoferta
+                                    </button>
+                                    <button class="btn-secondary" onclick="app.showToast('Em desenvolvimento')" style="background-color: #F44336; color: white;">
+                                        <i class="fas fa-times"></i> Recusar
+                                    </button>
+                                    <button class="btn-secondary" onclick="app.navigateTo('chat')">
+                                        <i class="fas fa-comments"></i> Conversar
+                                    </button>
+                                ` : proposal.status === 'accepted' ? `
+                                    <button class="btn-secondary" onclick="app.navigateTo('chat')">
+                                        <i class="fas fa-comments"></i> Conversar
+                                    </button>
+                                    <button class="btn-secondary" onclick="app.showToast('Em desenvolvimento')">
+                                        <i class="fas fa-eye"></i> Ver Detalhes
+                                    </button>
+                                ` : `
+                                    <button class="btn-secondary" onclick="app.showToast('Em desenvolvimento')">
+                                        <i class="fas fa-eye"></i> Ver Detalhes
+                                    </button>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                container.style.display = 'block';
+                if (emptyState) emptyState.style.display = 'none';
+            }
+            
+            // Update filter counters
+            this.updateNegotiationCounters(proposals);
+            
+        } catch (error) {
+            console.error('Error rendering negotiations:', error);
+            if (container) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: var(--color-danger);">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                        <p>Erro ao carregar negociações. Por favor, recarregue a página.</p>
+                    </div>
+                `;
+            }
+        }
+    }
+    
+    // Update negotiation filter counters
+    updateNegotiationCounters(proposals) {
+        const countAll = document.getElementById('countAll');
+        const countPending = document.getElementById('countPending');
+        const countAccepted = document.getElementById('countAccepted');
+        const countRejected = document.getElementById('countRejected');
+        
+        if (countAll) countAll.textContent = proposals.length;
+        if (countPending) countPending.textContent = proposals.filter(p => p.status === 'pending').length;
+        if (countAccepted) countAccepted.textContent = proposals.filter(p => p.status === 'accepted').length;
+        if (countRejected) countRejected.textContent = proposals.filter(p => p.status === 'rejected').length;
+    }
+    
+    // Get proposal status information
+    getProposalStatusInfo(status) {
+        const statusMap = {
+            'pending': {
+                label: 'Pendente',
+                icon: 'fa-clock',
+                bgColor: '#FFF3CD',
+                textColor: '#FF9800'
+            },
+            'accepted': {
+                label: 'Aceita',
+                icon: 'fa-check',
+                bgColor: '#E8F5E9',
+                textColor: '#4CAF50'
+            },
+            'rejected': {
+                label: 'Recusada',
+                icon: 'fa-times',
+                bgColor: '#FFEBEE',
+                textColor: '#F44336'
+            },
+            'countered': {
+                label: 'Contraoferta',
+                icon: 'fa-exchange-alt',
+                bgColor: '#E3F2FD',
+                textColor: '#2196F3'
+            }
+        };
+        return statusMap[status] || statusMap['pending'];
+    }
+    
+    // Format time ago
+    formatTimeAgo(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+        
+        if (diffMins < 1) return 'Agora mesmo';
+        if (diffMins < 60) return `Há ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
+        if (diffHours < 24) return `Há ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+        if (diffDays === 1) return 'Ontem';
+        if (diffDays < 7) return `Há ${diffDays} dias`;
+        return date.toLocaleDateString('pt-BR');
+    }
+
+    // Filter negotiations
+    filterNegotiations(filter) {
+        console.log('Filtering negotiations:', filter);
+        
+        // Get all negotiation cards
+        const cards = document.querySelectorAll('.negotiation-card');
+        console.log('Found cards:', cards.length);
+        
+        // Update button states using IDs
+        const allBtn = document.getElementById('filterAllBtn');
+        const pendingBtn = document.getElementById('filterPendingBtn');
+        const acceptedBtn = document.getElementById('filterAcceptedBtn');
+        const rejectedBtn = document.getElementById('filterRejectedBtn');
+        
+        // Reset all buttons
+        [allBtn, pendingBtn, acceptedBtn, rejectedBtn].forEach(btn => {
+            if (btn) {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-secondary');
+            }
+        });
+        
+        // Highlight active filter button
+        if (filter === 'all' && allBtn) {
+            allBtn.classList.remove('btn-secondary');
+            allBtn.classList.add('btn-primary');
+        } else if (filter === 'pending' && pendingBtn) {
+            pendingBtn.classList.remove('btn-secondary');
+            pendingBtn.classList.add('btn-primary');
+        } else if (filter === 'accepted' && acceptedBtn) {
+            acceptedBtn.classList.remove('btn-secondary');
+            acceptedBtn.classList.add('btn-primary');
+        } else if (filter === 'rejected' && rejectedBtn) {
+            rejectedBtn.classList.remove('btn-secondary');
+            rejectedBtn.classList.add('btn-primary');
+        }
+        
+        // Filter cards
+        let visibleCount = 0;
+        cards.forEach(card => {
+            if (filter === 'all') {
+                card.style.display = 'block';
+                visibleCount++;
+            } else if (filter === 'pending') {
+                if (card.classList.contains('pending')) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            } else if (filter === 'accepted') {
+                if (card.classList.contains('accepted')) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            } else if (filter === 'rejected') {
+                if (card.classList.contains('rejected')) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            }
+        });
+        
+        console.log('Visible cards after filter:', visibleCount);
+        
+        // Show toast feedback
+        const filterName = filter === 'all' ? 'Todas' : 
+                          filter === 'pending' ? 'Pendentes' : 
+                          filter === 'accepted' ? 'Aceitas' : 'Recusadas';
+        this.showToast(`Filtro: ${filterName} (${visibleCount} negociação${visibleCount !== 1 ? 'ões' : ''})`);
+    }
+
+    // Render offers (search offers page)
+    renderOffers(filters = {}) {
+        const container = document.getElementById('offersGrid');
+        if (!container) return;
+
+        let offers = this.getOffers();
+        const users = this.getUsers();
+        
+        // Apply filters
+        offers = this.filterOffers(offers, filters);
+
+        // Update results count
+        const resultsCount = document.getElementById('resultsCount');
+        if (resultsCount) {
+            resultsCount.textContent = `${offers.length} ${offers.length === 1 ? 'oferta encontrada' : 'ofertas encontradas'}`;
+        }
+
+        container.innerHTML = offers.map(offer => {
+            const producer = users.find(u => u.id === offer.producerId);
+            return this.renderOfferCard(offer, producer);
+        }).join('');
+
+        // Add click listeners
+        container.querySelectorAll('.offer-card').forEach(card => {
+            const offerId = card.getAttribute('data-offer-id');
+            const offer = offers.find(o => o.id === offerId);
+            if (offer) {
+                card.addEventListener('click', () => {
+                    this.showOfferDetail(offer);
+                });
+            }
+        });
+    }
+    
+    // Filter offers based on criteria
+    filterOffers(offers, filters) {
+        let filtered = offers.filter(offer => offer.status === 'active');
+        
+        // Filter by search text
+        if (filters.search) {
+            const searchLower = filters.search.toLowerCase();
+            filtered = filtered.filter(offer => 
+                offer.variety.toLowerCase().includes(searchLower) ||
+                offer.city.toLowerCase().includes(searchLower) ||
+                offer.state.toLowerCase().includes(searchLower) ||
+                offer.type.toLowerCase().includes(searchLower)
+            );
+        }
+        
+        // Filter by state
+        if (filters.state) {
+            filtered = filtered.filter(offer => offer.state === filters.state);
+        }
+        
+        // Filter by variety
+        if (filters.variety) {
+            filtered = filtered.filter(offer => offer.variety === filters.variety);
+        }
+        
+        // Filter by type
+        if (filters.type) {
+            filtered = filtered.filter(offer => offer.type === filters.type);
+        }
+        
+        // Filter by price range
+        if (filters.priceMin) {
+            filtered = filtered.filter(offer => offer.price >= parseFloat(filters.priceMin));
+        }
+        if (filters.priceMax) {
+            filtered = filtered.filter(offer => offer.price <= parseFloat(filters.priceMax));
+        }
+        
+        // Filter by minimum quantity
+        if (filters.quantityMin) {
+            filtered = filtered.filter(offer => offer.quantity >= parseInt(filters.quantityMin));
+        }
+        
+        // Filter by maximum humidity
+        if (filters.humidity) {
+            filtered = filtered.filter(offer => offer.humidity <= parseFloat(filters.humidity));
+        }
+        
+        // Sort offers
+        if (filters.sort === 'price-asc') {
+            filtered.sort((a, b) => a.price - b.price);
+        } else if (filters.sort === 'price-desc') {
+            filtered.sort((a, b) => b.price - a.price);
+        } else if (filters.sort === 'quantity-desc') {
+            filtered.sort((a, b) => b.quantity - a.quantity);
+        } else {
+            // Default: most recent first
+            filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+        
+        return filtered;
+    }
+
+    // Filter industries
+    filterIndustries(filter) {
+        console.log('Filtering industries:', filter);
+        
+        // Get all industry cards
+        const cards = document.querySelectorAll('.industry-card');
+        
+        // Update button states - find buttons in the industries section
+        const industriesSection = document.getElementById('active-industries-section');
+        if (industriesSection) {
+            const buttons = industriesSection.querySelectorAll('button[onclick*="filterIndustries"]');
+            buttons.forEach(btn => {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-secondary');
+            });
+            
+            // Highlight active filter button
+            buttons.forEach(btn => {
+                const onclickStr = btn.getAttribute('onclick');
+                if (onclickStr && onclickStr.includes(`'${filter}'`)) {
+                    btn.classList.remove('btn-secondary');
+                    btn.classList.add('btn-primary');
+                }
+            });
+        }
+        
+        // Filter cards
+        let visibleCount = 0;
+        cards.forEach(card => {
+            if (filter === 'all') {
+                card.style.display = 'flex';
+                visibleCount++;
+            } else if (filter === 'active') {
+                if (card.classList.contains('active')) {
+                    card.style.display = 'flex';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            } else if (filter === 'inactive') {
+                if (card.classList.contains('inactive')) {
+                    card.style.display = 'flex';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            }
+        });
+        
+        // Show feedback
+        const filterName = filter === 'all' ? 'Todas' : filter === 'active' ? 'Ativas' : 'Inativas';
+        this.showToast(`Mostrando ${visibleCount} indústria(s) - ${filterName}`);
+    }
+
+    // Send message to industry
+    sendMessageToIndustry(industryId) {
+        console.log('Opening chat with industry:', industryId);
+        this.showToast('Abrindo chat...');
+        // TODO: Navigate to chat with industry
+    }
+
+    // View industry profile
+    viewIndustryProfile(industryId) {
+        console.log('Viewing industry profile:', industryId);
+        this.showToast('Carregando perfil...');
+        // TODO: Open profile modal or page
+    }
+
+    // Open manage offer modal
+    openManageOfferModal(offerId) {
+        const offer = this.getOfferById(offerId);
+        if (!offer) return;
+
+        const modal = document.getElementById('manageOfferModal');
+        const content = document.getElementById('manageOfferContent');
+
+        const now = new Date();
+        const expirationDate = new Date(offer.expiration);
+        const daysUntilExpiration = Math.ceil((expirationDate - now) / (1000 * 60 * 60 * 24));
+
+        content.innerHTML = `
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="font-size: 1.125rem; color: var(--color-primary); margin-bottom: 0.5rem;">${offer.variety} - ${offer.type}</h4>
+                <div style="display: flex; gap: 1rem; font-size: 0.875rem; color: var(--color-gray-600);">
+                    <span><i class="fas fa-box"></i> ${offer.quantity} ${offer.unit}</span>
+                    <span><i class="fas fa-dollar-sign"></i> R$ ${offer.price.toFixed(2)}/saca</span>
+                    <span><i class="fas fa-calendar"></i> Expira em ${daysUntilExpiration} dias</span>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <button class="btn-secondary btn-block" onclick="app.extendOfferExpiration('${offer.id}')">
+                    <i class="fas fa-calendar-plus"></i> Estender Validade (+7 dias)
+                </button>
+                <button class="btn-secondary btn-block" onclick="app.showEditOfferForm('${offer.id}')">
+                    <i class="fas fa-edit"></i> Editar Preço/Quantidade
+                </button>
+                ${offer.status === 'active' ? `
+                    <button class="btn-secondary btn-block" onclick="app.pauseOffer('${offer.id}')">
+                        <i class="fas fa-pause"></i> Pausar Oferta
+                    </button>
+                ` : `
+                    <button class="btn-primary btn-block" onclick="app.reactivateOffer('${offer.id}')">
+                        <i class="fas fa-play"></i> Reativar Oferta
+                    </button>
+                `}
+                <button class="btn-secondary btn-block" style="color: var(--color-error); border-color: var(--color-error);" onclick="app.confirmDeleteOffer('${offer.id}')">
+                    <i class="fas fa-trash"></i> Excluir Oferta
+                </button>
+            </div>
+        `;
+
+        modal.classList.add('active');
+    }
+
+    // Extend offer expiration
+    extendOfferExpiration(offerId) {
+        const offer = this.getOfferById(offerId);
+        if (!offer) return;
+
+        const currentExpiration = new Date(offer.expiration);
+        currentExpiration.setDate(currentExpiration.getDate() + 7);
+        const newExpiration = currentExpiration.toISOString().split('T')[0];
+
+        this.updateOffer(offerId, { expiration: newExpiration });
+        this.closeModal('manageOfferModal');
+        this.showToast('Validade estendida por mais 7 dias!');
+        this.renderMyOffers();
+    }
+
+    // Pause offer
+    pauseOffer(offerId) {
+        this.updateOffer(offerId, { status: 'paused' });
+        this.closeModal('manageOfferModal');
+        this.showToast('Oferta pausada com sucesso!');
+        this.renderMyOffers();
+    }
+
+    // Reactivate offer
+    reactivateOffer(offerId) {
+        this.updateOffer(offerId, { status: 'active' });
+        this.closeModal('manageOfferModal');
+        this.showToast('Oferta reativada com sucesso!');
+        this.renderMyOffers();
+    }
+
+    // Confirm delete offer
+    confirmDeleteOffer(offerId) {
+        if (confirm('Tem certeza que deseja excluir esta oferta? Esta ação não pode ser desfeita.')) {
+            this.deleteOffer(offerId);
+            this.closeModal('manageOfferModal');
+            this.showToast('Oferta excluída com sucesso!');
+            this.renderMyOffers();
+        }
+    }
+
+    // Show offer detail modal
+    showOfferDetail(offer) {
+        const modal = document.getElementById('offerDetailModal');
+        const content = document.getElementById('offerDetailContent');
+        const users = this.getUsers();
+        const producer = users.find(u => u.id === offer.producerId);
+
+        content.innerHTML = `
+            <div class="offer-detail-header">
+                <img src="https://via.placeholder.com/800x400/5F6C37/FEFADF?text=${encodeURIComponent(offer.variety)}" 
+                     alt="${offer.variety}" 
+                     style="width: 100%; height: 300px; object-fit: cover; border-radius: 12px; margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div>
+                        <h2 style="font-size: 2rem; color: var(--color-primary); margin-bottom: 0.5rem;">${offer.variety} - ${offer.type}</h2>
+                        <p style="color: var(--color-gray-600);">Oferta #${offer.id}</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <p style="font-size: 2.5rem; font-weight: 800; color: var(--color-accent);">R$ ${offer.price.toFixed(2)}</p>
+                        <p style="color: var(--color-gray-600);">por saca de 50kg</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin: 2rem 0; padding: 2rem; background-color: var(--color-gray-50); border-radius: 12px;">
+                <div>
+                    <p style="color: var(--color-gray-600); font-size: 0.875rem; margin-bottom: 0.25rem;">Quantidade</p>
+                    <p style="font-size: 1.25rem; font-weight: 700; color: var(--color-primary);">${offer.quantity} ${offer.unit}</p>
+                </div>
+                <div>
+                    <p style="color: var(--color-gray-600); font-size: 0.875rem; margin-bottom: 0.25rem;">Umidade</p>
+                    <p style="font-size: 1.25rem; font-weight: 700; color: var(--color-primary);">${offer.humidity}%</p>
+                </div>
+                <div>
+                    <p style="color: var(--color-gray-600); font-size: 0.875rem; margin-bottom: 0.25rem;">Localização</p>
+                    <p style="font-size: 1.25rem; font-weight: 700; color: var(--color-primary);">${offer.city}, ${offer.state}</p>
+                </div>
+                <div>
+                    <p style="color: var(--color-gray-600); font-size: 0.875rem; margin-bottom: 0.25rem;">Frete</p>
+                    <p style="font-size: 1.25rem; font-weight: 700; color: var(--color-primary);">${offer.freight}</p>
+                </div>
+            </div>
+
+            <div style="margin: 2rem 0;">
+                <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--color-primary); margin-bottom: 1rem;">Descrição</h3>
+                <p style="line-height: 1.8; color: var(--color-gray-700);">${offer.description}</p>
+            </div>
+
+            <div style="margin: 2rem 0;">
+                <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--color-primary); margin-bottom: 1rem;">Informações Adicionais</h3>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-check-circle" style="color: var(--color-success);"></i>
+                        <span>${offer.negotiable ? 'Preço negociável' : 'Preço fixo'}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-check-circle" style="color: var(--color-success);"></i>
+                        <span>${offer.partialSale ? 'Aceita venda parcial' : 'Venda total apenas'}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-${offer.hasTransport ? 'check-circle' : 'times-circle'}" style="color: var(--color-${offer.hasTransport ? 'success' : 'error'});"></i>
+                        <span>${offer.hasTransport ? 'Possui transporte próprio' : 'Sem transporte próprio'}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-calendar" style="color: var(--color-accent);"></i>
+                        <span>Válido até: ${new Date(offer.expiration).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin: 2rem 0; padding: 1.5rem; background-color: var(--color-background); border-radius: 12px;">
+                <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--color-primary); margin-bottom: 1rem;">Sobre o Produtor</h3>
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="user-avatar large">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <h4 style="font-size: 1.125rem; font-weight: 600; color: var(--color-gray-900); margin-bottom: 0.25rem;">${producer ? producer.name : 'Produtor'}</h4>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-star" style="color: var(--color-accent);"></i>
+                            <span style="font-weight: 600;">${producer ? producer.rating : '0.0'}</span>
+                            <span style="color: var(--color-gray-600);">(${producer ? producer.reviewCount : 0} avaliações)</span>
+                        </div>
+                    </div>
+                </div>
+                ${producer && producer.type === 'producer' ? `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.875rem;">
+                        <div>
+                            <p style="color: var(--color-gray-600);">Área plantada</p>
+                            <p style="font-weight: 600; color: var(--color-gray-900);">${producer.farmArea} hectares</p>
+                        </div>
+                        <div>
+                            <p style="color: var(--color-gray-600);">Produção média</p>
+                            <p style="font-weight: 600; color: var(--color-gray-900);">${producer.avgProduction} toneladas/ano</p>
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button class="btn-secondary" style="flex: 1;" onclick="app.closeModal('offerDetailModal')">
+                    <i class="fas fa-times"></i> Fechar
+                </button>
+                ${this.currentUser && this.currentUser.type === 'industry' ? `
+                    <button class="btn-primary" style="flex: 2;" onclick="app.openProposalModal('${offer.id}')">
+                        <i class="fas fa-file-alt"></i> Enviar Proposta
+                    </button>
+                ` : ''}
+            </div>
+        `;
+
+        modal.classList.add('active');
+    }
+
+    // Close modal
+    closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    }
+
+    // Open proposal modal
+    openProposalModal(offerId) {
+        this.closeModal('offerDetailModal');
+        const modal = document.getElementById('proposalModal');
+        modal.setAttribute('data-offer-id', offerId);
+        modal.classList.add('active');
+    }
+
+    // Toggle favorite
+    toggleFavorite(offerId) {
+        this.showToast('Funcionalidade em desenvolvimento');
+    }
+    
+    // Send proposal to producer
+    sendProposal(offerId) {
+        const offer = this.getOfferById(offerId);
+        if (!offer) {
+            this.showToast('Oferta não encontrada', 'error');
+            return;
+        }
+        
+        const producer = this.getUserById(offer.producerId);
+        
+        // Modal simples para enviar proposta
+        const proposalPrice = prompt(`Enviar proposta para ${offer.variety}\n\nPreço atual: R$ ${offer.price.toFixed(2)}/saca\nDigite seu preço proposto (R$/saca):`);
+        
+        if (proposalPrice && !isNaN(proposalPrice)) {
+            const price = parseFloat(proposalPrice);
+            
+            // Criar proposta
+            const proposal = this.addProposal({
+                offerId: offer.id,
+                producerId: offer.producerId,
+                industryId: this.currentUser.id,
+                offerPrice: offer.price,
+                proposedPrice: price,
+                quantity: offer.quantity,
+                variety: offer.variety,
+                type: offer.type,
+                message: `Proposta de R$ ${price.toFixed(2)}/saca`
+            });
+            
+            this.showToast(`✅ Proposta de R$ ${price.toFixed(2)}/saca enviada para ${producer ? producer.name : 'produtor'}!`, 'success');
+            console.log('Proposal created:', proposal);
+        }
+    }
+    
+    // Toggle purchases view (grid/list)
+    togglePurchasesView(view) {
+        const list = document.getElementById('purchasesList');
+        const gridBtn = document.getElementById('purchasesGridViewBtn');
+        const listBtn = document.getElementById('purchasesListViewBtn');
+        
+        if (!list) return;
+        
+        // Update list class
+        if (view === 'list') {
+            list.classList.add('list-view');
+            gridBtn.classList.remove('active');
+            listBtn.classList.add('active');
+        } else {
+            list.classList.remove('list-view');
+            gridBtn.classList.add('active');
+            listBtn.classList.remove('active');
+        }
+        
+        // Save preference
+        localStorage.setItem('purchasesViewPreference', view);
+        
+        // Show feedback
+        const viewName = view === 'list' ? 'Lista' : 'Grade';
+        this.showToast(`Visualização de compras alterada para ${viewName}`);
+    }
+
+    // Render charts
+    renderCharts() {
+        setTimeout(() => {
+            this.renderSalesChart();
+            // this.renderPriceChart(); // Removed: chart no longer exists
+        }, 100);
+    }
+
+    // Render sales chart
+    renderSalesChart() {
+        const canvas = document.getElementById('salesChart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Out', 'Nov', 'Dez', 'Jan', 'Fev', 'Mar'],
+                datasets: [{
+                    label: 'Vendas (toneladas)',
+                    data: [120, 150, 180, 165, 190, 210],
+                    backgroundColor: '#DCA25D',
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    // Render price chart
+    renderPriceChart() {
+        const canvas = document.getElementById('priceChart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'],
+                datasets: [{
+                    label: 'Preço Médio (R$/saca)',
+                    data: [84.50, 85.00, 86.20, 88.00],
+                    borderColor: '#273617',
+                    backgroundColor: 'rgba(39, 54, 23, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: 80,
+                        max: 90
+                    }
+                }
+            }
+        });
+    }
+
+    // Render map
+    renderMap() {
+        setTimeout(() => {
+            const mapElement = document.getElementById('map');
+            if (!mapElement || mapElement.classList.contains('map-initialized')) return;
+
+            // Initialize Leaflet map
+            const map = L.map('map').setView([-30.0346, -51.2177], 7);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add markers for offers
+            const offers = this.getOffers();
+            const cities = {
+                'Cachoeira do Sul': [-30.0346, -52.8934],
+                'Santa Maria': [-29.6842, -53.8069],
+                'Porto Alegre': [-30.0346, -51.2177]
+            };
+
+            offers.forEach(offer => {
+                const coords = cities[offer.city];
+                if (coords) {
+                    const markerColor = offer.type === 'Tipo 1' && offer.price < 85 ? 'green' :
+                                      offer.type === 'Tipo 1' ? 'yellow' : 'blue';
+                    
+                    L.circleMarker(coords, {
+                        radius: 10,
+                        fillColor: markerColor === 'green' ? '#4CAF50' : 
+                                 markerColor === 'yellow' ? '#DCA25D' : '#2196F3',
+                        color: '#fff',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).addTo(map)
+                    .bindPopup(`
+                        <div style="font-family: Inter, sans-serif;">
+                            <h4 style="margin: 0 0 0.5rem 0; color: #273617;">${offer.variety}</h4>
+                            <p style="margin: 0; font-size: 0.875rem;"><strong>R$ ${offer.price.toFixed(2)}/saca</strong></p>
+                            <p style="margin: 0.25rem 0; font-size: 0.813rem; color: #666;">${offer.quantity} ${offer.unit} - ${offer.type}</p>
+                            <button onclick="app.showOfferDetail(app.getOfferById('${offer.id}'))" 
+                                    style="margin-top: 0.5rem; padding: 0.5rem 1rem; background-color: #273617; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.813rem;">
+                                Ver Detalhes
+                            </button>
+                        </div>
+                    `);
+                }
+            });
+
+            mapElement.classList.add('map-initialized');
+        }, 100);
+    }
+
+    // Render profile
+    renderProfile() {
+        if (!this.currentUser) return;
+        
+        const isProducer = this.currentUser.type === 'producer';
+        const user = this.currentUser;
+        
+        // Update topbar user info
+        const topbarUserInfo = document.querySelector('#page-profile .topbar .user-info');
+        if (topbarUserInfo) {
+            topbarUserInfo.innerHTML = `
+                <span class="user-name">${user.name}</span>
+                <span class="user-role">${isProducer ? 'Produtor' : 'Indústria'}</span>
+            `;
+        }
+        
+        // Update profile header
+        const profileHeader = document.querySelector('#page-profile .profile-header');
+        if (profileHeader) {
+            const icon = isProducer ? 'fa-user' : 'fa-building';
+            const subtitle = isProducer 
+                ? `Produtor de Arroz - ${user.city}, ${user.state}`
+                : `Indústria Beneficiadora - ${user.city}, ${user.state}`;
+            const memberSince = new Date(user.createdAt).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+            const statsText = isProducer 
+                ? '47 vendas realizadas'
+                : '156 compras realizadas';
+            
+            profileHeader.innerHTML = `
+                <div class="profile-avatar-section">
+                    <div class="profile-avatar large">
+                        <i class="fas ${icon}"></i>
+                    </div>
+                    <button class="btn-secondary">
+                        <i class="fas fa-camera"></i> Alterar Foto
+                    </button>
+                </div>
+                <div class="profile-info-section">
+                    <h2>${user.name}</h2>
+                    <p class="profile-subtitle">${subtitle}</p>
+                    <div class="profile-rating">
+                        ${this.renderStars(user.rating)}
+                        <span>${user.rating} (${user.reviewCount} avaliações)</span>
+                    </div>
+                    <div class="profile-stats-inline">
+                        <div class="stat-inline">
+                            <i class="fas fa-check-circle"></i>
+                            <span>${statsText}</span>
+                        </div>
+                        <div class="stat-inline">
+                            <i class="fas fa-calendar"></i>
+                            <span>Membro desde ${memberSince}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Update profile details (info tab)
+        const tabInfo = document.querySelector('#page-profile #tab-info');
+        if (tabInfo) {
+            if (isProducer) {
+                // Produtor - mostrar dados pessoais e propriedade
+                tabInfo.innerHTML = `
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Dados Pessoais</h3>
+                            <button class="btn-secondary btn-sm">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                        </div>
+                        <div class="profile-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Nome Completo</span>
+                                <span class="detail-value">${user.name}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">CPF</span>
+                                <span class="detail-value">${user.document}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">E-mail</span>
+                                <span class="detail-value">${user.email}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Telefone</span>
+                                <span class="detail-value">${user.phone}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Cidade</span>
+                                <span class="detail-value">${user.city} - ${user.state}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Informações da Propriedade</h3>
+                            <button class="btn-secondary btn-sm">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                        </div>
+                        <div class="profile-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Área Plantada</span>
+                                <span class="detail-value">${user.farmArea} hectares</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Produção Média Anual</span>
+                                <span class="detail-value">${user.avgProduction} toneladas</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Variedades Cultivadas</span>
+                                <span class="detail-value">${user.varieties.join(', ')}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Certificações</span>
+                                <span class="detail-value">
+                                    ${user.certifications ? user.certifications.map(c => `<span class="badge badge-success">${c}</span>`).join(' ') : 'Nenhuma'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Indústria - mostrar dados empresariais e capacidade
+                tabInfo.innerHTML = `
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Dados Empresariais</h3>
+                            <button class="btn-secondary btn-sm">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                        </div>
+                        <div class="profile-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Razão Social</span>
+                                <span class="detail-value">${user.name}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">CNPJ</span>
+                                <span class="detail-value">${user.document}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">E-mail Corporativo</span>
+                                <span class="detail-value">${user.email}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Telefone</span>
+                                <span class="detail-value">${user.phone}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Localização</span>
+                                <span class="detail-value">${user.city} - ${user.state}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Capacidade Industrial</h3>
+                            <button class="btn-secondary btn-sm">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                        </div>
+                        <div class="profile-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Capacidade de Processamento</span>
+                                <span class="detail-value">${user.capacity} toneladas/mês</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Variedades de Interesse</span>
+                                <span class="detail-value">${user.varieties.join(', ')}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Certificações</span>
+                                <span class="detail-value">
+                                    <span class="badge badge-success">ISO 9001</span>
+                                    <span class="badge badge-success">HACCP</span>
+                                </span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Tipo de Beneficiamento</span>
+                                <span class="detail-value">Descascamento, Polimento, Empacotamento</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    }
+    
+    // Helper function to render star rating
+    renderStars(rating) {
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+        const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+        
+        let html = '';
+        for (let i = 0; i < fullStars; i++) {
+            html += '<i class="fas fa-star"></i>';
+        }
+        if (hasHalfStar) {
+            html += '<i class="fas fa-star-half-alt"></i>';
+        }
+        for (let i = 0; i < emptyStars; i++) {
+            html += '<i class="far fa-star"></i>';
+        }
+        return html;
+    }
+
+    // Render chat
+    renderChat() {
+        this.renderChatList();
+        if (this.currentChatId) {
+            this.renderChatMessages(this.currentChatId);
+        }
+    }
+
+    // Render chat list
+    renderChatList() {
+        const container = document.getElementById('chatList');
+        if (!container) return;
+
+        const chats = this.getUserChats();
+        const users = this.getUsers();
+
+        if (chats.length === 0) {
+            container.innerHTML = `
+                <div style="padding: 2rem; text-align: center; color: var(--color-gray-500);">
+                    <i class="fas fa-comments" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                    <p>Nenhuma conversa ainda</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = chats.map(chat => {
+            const otherUserId = chat.participants.find(id => id !== this.currentUser.id);
+            const otherUser = users.find(u => u.id === otherUserId);
+            
+            return `
+                <div class="chat-item ${chat.id === this.currentChatId ? 'active' : ''}" 
+                     onclick="app.selectChat('${chat.id}')">
+                    <div class="chat-item-header">
+                        <span class="chat-item-name">${otherUser ? otherUser.name : 'Usuário'}</span>
+                        <span class="chat-item-time">${this.formatTime(chat.lastMessageTime)}</span>
+                    </div>
+                    <p class="chat-item-preview ${chat.unreadCount > 0 ? 'unread' : ''}">
+                        ${chat.lastMessage}
+                    </p>
+                </div>
+            `;
+        }).join('');
+
+        // Auto-select first chat if none selected
+        if (!this.currentChatId && chats.length > 0) {
+            this.selectChat(chats[0].id);
+        }
+    }
+
+    // Select chat
+    selectChat(chatId) {
+        this.currentChatId = chatId;
+        this.renderChatList();
+        this.renderChatMessages(chatId);
+    }
+
+    // Render chat messages
+    renderChatMessages(chatId) {
+        const container = document.getElementById('chatMessages');
+        if (!container) return;
+
+        const messages = this.getMessagesByChatId(chatId);
+        const users = this.getUsers();
+
+        container.innerHTML = messages.map(msg => {
+            const sender = users.find(u => u.id === msg.senderId);
+            const isSent = msg.senderId === this.currentUser.id;
+
+            return `
+                <div class="message ${isSent ? 'sent' : ''}">
+                    <div class="message-avatar">
+                        <i class="fas fa-${sender && sender.type === 'industry' ? 'building' : 'user'}"></i>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-name">${sender ? sender.name : 'Usuário'}</span>
+                            <span class="message-time">${this.formatTime(msg.timestamp)}</span>
+                        </div>
+                        <div class="message-bubble">
+                            ${msg.content}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Scroll to bottom
+        container.scrollTop = container.scrollHeight;
+    }
+
+    // Send message
+    sendMessage() {
+        const input = document.getElementById('messageInput');
+        if (!input || !this.currentChatId) return;
+
+        const content = input.value.trim();
+        if (!content) return;
+
+        const chats = this.getChats();
+        const chat = chats.find(c => c.id === this.currentChatId);
+        if (!chat) return;
+
+        const receiverId = chat.participants.find(id => id !== this.currentUser.id);
+        this.addMessage(this.currentChatId, content, receiverId, chat.offerId);
+
+        input.value = '';
+        this.renderChatMessages(this.currentChatId);
+        this.renderChatList();
+    }
+
+    // Format time
+    formatTime(timestamp) {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diff = now - date;
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+        if (hours < 1) return 'Agora';
+        if (hours < 24) return `Há ${hours}h`;
+        if (days < 7) return `Há ${days}d`;
+        return date.toLocaleDateString('pt-BR');
+    }
+
+    // Show toast notification
+    showToast(message, duration = 3000) {
+        const toast = document.getElementById('toast');
+        const messageEl = document.getElementById('toastMessage');
+        
+        if (toast && messageEl) {
+            messageEl.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, duration);
+        }
+    }
+
+    // Toggle sidebar
+    toggleSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar) {
+            sidebar.classList.toggle('active');
+        }
+    }
+
+    // Close sidebar
+    closeSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar) {
+            sidebar.classList.remove('active');
+        }
+    }
+
+    // Toggle mobile menu
+    toggleMobileMenu() {
+        const menu = document.getElementById('mobileMenu');
+        if (menu) {
+            menu.classList.toggle('active');
+        }
+    }
+
+    // Close mobile menu
+    closeMobileMenu() {
+        const menu = document.getElementById('mobileMenu');
+        if (menu) {
+            menu.classList.remove('active');
+        }
+    }
+
+    // Toggle filters
+    toggleFilters() {
+        const panel = document.getElementById('filtersPanel');
+        if (panel) {
+            panel.classList.toggle('active');
+        }
+    }
+
+    // Switch tab
+    switchTab(tabName) {
+        // Update tabs
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.classList.remove('active');
+            if (tab.getAttribute('data-tab') === tabName) {
+                tab.classList.add('active');
+            }
+        });
+
+        // Update tab contents
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        const targetContent = document.getElementById('tab-' + tabName);
+        if (targetContent) {
+            targetContent.classList.add('active');
+        }
+    }
+
+    // Logout
+    logout() {
+        this.currentUser = null;
+        this.saveUserSession();
+        this.navigateTo('landing');
+        this.showToast('Logout realizado com sucesso');
+    }
+}
+
+// ============================================
+// FORM HANDLERS
+// ============================================
+
+// Handle login
+function handleLogin(event) {
+    event.preventDefault();
+    
+    console.log('=== LOGIN ATTEMPT ===');
+    
+    try {
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        
+        console.log('Email:', email);
+        console.log('Password length:', password.length);
+
+        const users = JSON.parse(localStorage.getItem('mercadoArroz_users') || '[]');
+        console.log('Total users in database:', users.length);
+        
+        const user = users.find(u => 
+            (u.email === email || u.document === email) && u.password === password
+        );
+        
+        console.log('User found:', !!user);
+
+        if (user) {
+            console.log('Login successful for:', user.name, '(', user.type, ')');
+            
+            if (typeof app === 'undefined') {
+                console.error('ERROR: app is undefined!');
+                alert('Erro: Sistema não inicializado. Recarregue a página.');
+                return;
+            }
+            
+            app.currentUser = user;
+            app.saveUserSession();
+            
+            if (user.type === 'producer') {
+                app.navigateTo('dashboard-producer');
+            } else {
+                app.navigateTo('dashboard-industry');
+            }
+            
+            app.showToast('Login realizado com sucesso!');
+        } else {
+            console.log('Login failed: invalid credentials');
+            if (typeof app !== 'undefined') {
+                app.showToast('Email ou senha incorretos', 3000);
+            } else {
+                alert('Email ou senha incorretos');
+            }
+        }
+    } catch (error) {
+        console.error('ERROR in handleLogin:', error);
+        alert('Erro ao fazer login: ' + error.message + '\n\nPor favor, recarregue a página (F5).');
+    }
+}
+
+// Handle register
+function handleRegister(event) {
+    event.preventDefault();
+    
+    const userType = document.querySelector('input[name="userType"]:checked').value;
+    const name = document.getElementById('registerName').value;
+    const document = document.getElementById('registerDocument').value;
+    const email = document.getElementById('registerEmail').value;
+    const phone = document.getElementById('registerPhone').value;
+    const password = document.getElementById('registerPassword').value;
+
+    const users = JSON.parse(localStorage.getItem('mercadoArroz_users') || '[]');
+    
+    // Check if email already exists
+    if (users.find(u => u.email === email)) {
+        app.showToast('Este e-mail já está cadastrado');
+        return;
+    }
+
+    const newUser = {
+        id: 'user_' + Date.now(),
+        type: userType,
+        name: name,
+        document: document,
+        email: email,
+        phone: phone,
+        password: password,
+        city: 'Porto Alegre',
+        state: 'RS',
+        rating: 0,
+        reviewCount: 0,
+        createdAt: new Date().toISOString().split('T')[0]
+    };
+
+    users.push(newUser);
+    localStorage.setItem('mercadoArroz_users', JSON.stringify(users));
+
+    app.currentUser = newUser;
+    app.saveUserSession();
+
+    if (userType === 'producer') {
+        app.navigateTo('dashboard-producer');
+    } else {
+        app.navigateTo('dashboard-industry');
+    }
+
+    app.showToast('Cadastro realizado com sucesso!');
+}
+
+// Handle create offer
+// Format price input to automatically add decimal places
+function formatPriceInput(input) {
+    let value = input.value.replace(/[^\d]/g, ''); // Remove tudo exceto números
+    
+    if (value === '') {
+        input.value = '';
+        return;
+    }
+    
+    // Se digitou apenas números inteiros (sem vírgula)
+    if (!input.value.includes(',')) {
+        // Quando perder o foco, adiciona ,00
+        input.addEventListener('blur', function addDecimals() {
+            if (input.value && !input.value.includes(',')) {
+                input.value = input.value + ',00';
+            }
+            input.removeEventListener('blur', addDecimals);
+        });
+    }
+    
+    // Formata com vírgula se já tiver decimais
+    if (value.length > 2 && input.value.includes(',')) {
+        const intPart = value.slice(0, -2);
+        const decPart = value.slice(-2);
+        input.value = intPart + ',' + decPart;
+    }
+}
+
+// Fill location from user profile
+function fillLocationFromProfile() {
+    if (app && app.currentUser) {
+        const cityInput = document.getElementById('offerCity');
+        const stateSelect = document.getElementById('offerState');
+        
+        if (cityInput && app.currentUser.city) {
+            cityInput.value = app.currentUser.city;
+            cityInput.setAttribute('readonly', true);
+            cityInput.style.backgroundColor = 'var(--color-gray-100)';
+            cityInput.style.cursor = 'not-allowed';
+        }
+        
+        if (stateSelect && app.currentUser.state) {
+            stateSelect.value = app.currentUser.state;
+            stateSelect.setAttribute('disabled', true);
+            stateSelect.style.backgroundColor = 'var(--color-gray-100)';
+            stateSelect.style.cursor = 'not-allowed';
+        }
+    }
+}
+
+function handleCreateOffer(event) {
+    event.preventDefault();
+
+    // Parse quantity range
+    const quantityValue = document.getElementById('offerQuantity').value;
+    let quantity = 0;
+    
+    if (quantityValue.includes('-')) {
+        // Pega o valor mínimo do range (ex: "5000-10000" -> 5000)
+        quantity = parseInt(quantityValue.split('-')[0]);
+    } else if (quantityValue.includes('+')) {
+        // Pega o valor antes do + (ex: "30000+" -> 30000)
+        quantity = parseInt(quantityValue.replace('+', ''));
+    }
+    
+    // Parse price (remove vírgula e converte)
+    const priceValue = document.getElementById('offerPrice').value.replace(',', '.');
+    
+    // Calculate expiration date from days
+    const expirationDays = parseInt(document.getElementById('offerExpiration').value);
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + expirationDays);
+    
+    const offerData = {
+        variety: document.getElementById('offerVariety').value,
+        type: document.getElementById('offerType').value,
+        quantity: quantity,
+        quantityRange: quantityValue, // Salva o range original
+        unit: 'sacas', // Fixo
+        humidity: document.getElementById('offerHumidity').value, // Agora é string (SECO, PRÉ-SECO, VERDE)
+        price: parseFloat(priceValue),
+        negotiable: document.getElementById('offerNegotiable').value === 'sim',
+        partialSale: document.getElementById('offerPartialSale').checked,
+        city: document.getElementById('offerCity').value,
+        state: document.getElementById('offerState').value,
+        freight: document.getElementById('offerFreight').value,
+        hasTransport: document.getElementById('offerHasTransport').checked,
+        description: document.getElementById('offerDescription').value,
+        expiration: expirationDate.toISOString().split('T')[0], // Formato YYYY-MM-DD
+        expirationDays: expirationDays // Salva os dias para referência
+    };
+
+    app.addOffer(offerData);
+    app.showToast('Oferta publicada com sucesso! Você receberá um lembrete 1 dia antes da expiração.');
+    
+    // Clear form
+    document.getElementById('createOfferForm').reset();
+    
+    // Restore location fields
+    fillLocationFromProfile();
+    
+    app.navigateTo('my-offers');
+}
+
+// Handle send proposal
+function handleSendProposal(event) {
+    event.preventDefault();
+
+    const modal = document.getElementById('proposalModal');
+    const offerId = modal.getAttribute('data-offer-id');
+    
+    app.showToast('Proposta enviada com sucesso!');
+    app.closeModal('proposalModal');
+}
+
+// Handle logout
+function handleLogout() {
+    if (confirm('Deseja realmente sair?')) {
+        app.logout();
+    }
+}
+
+// Navigate to page (global function)
+function navigateTo(page) {
+    app.navigateTo(page);
+}
+
+// Navigate to dashboard based on user type
+function navigateToDashboard() {
+    if (app.currentUser) {
+        if (app.currentUser.type === 'producer') {
+            app.navigateTo('dashboard-producer');
+        } else {
+            app.navigateTo('dashboard-industry');
+        }
+    }
+}
+
+// Scroll to Industries section
+function scrollToIndustries(event) {
+    event.preventDefault();
+    // Navigate to active industries page
+    app.navigateTo('active-industries');
+}
+
+// Toggle sidebar
+function toggleSidebar() {
+    app.toggleSidebar();
+}
+
+// Toggle mobile menu
+function toggleMobileMenu() {
+    app.toggleMobileMenu();
+}
+
+// Toggle filters
+function toggleFilters() {
+    app.toggleFilters();
+}
+
+// Clear filters
+function clearFilters() {
+    document.getElementById('filterState').value = '';
+    document.getElementById('filterVariety').value = '';
+    document.getElementById('filterType').value = '';
+    document.getElementById('filterPriceMin').value = '';
+    document.getElementById('filterPriceMax').value = '';
+    document.getElementById('filterQuantityMin').value = '';
+    document.getElementById('filterHumidity').value = '';
+}
+
+// Apply filters
+function applyFilters() {
+    // Get all filter values
+    const filters = {
+        search: document.getElementById('searchInput')?.value || '',
+        state: document.getElementById('filterState')?.value || '',
+        variety: document.getElementById('filterVariety')?.value || '',
+        type: document.getElementById('filterType')?.value || '',
+        priceMin: document.getElementById('filterPriceMin')?.value || '',
+        priceMax: document.getElementById('filterPriceMax')?.value || '',
+        quantityMin: document.getElementById('filterQuantityMin')?.value || '',
+        humidity: document.getElementById('filterHumidity')?.value || '',
+        sortBy: document.getElementById('sortBy')?.value || 'recent'
+    };
+    
+    // Apply filters to offers
+    if (app) {
+        app.renderOffers(filters);
+    }
+    
+    // Close filters panel
+    toggleFilters();
+    
+    // Show toast
+    const activeFilters = Object.values(filters).filter(v => v !== '').length;
+    if (activeFilters > 0) {
+        app.showToast(`${activeFilters} ${activeFilters === 1 ? 'filtro aplicado' : 'filtros aplicados'}`);
+    }
+}
+
+// Clear all filters
+function clearFilters() {
+    // Clear all filter inputs
+    const searchInput = document.getElementById('searchInput');
+    const filterState = document.getElementById('filterState');
+    const filterVariety = document.getElementById('filterVariety');
+    const filterType = document.getElementById('filterType');
+    const filterPriceMin = document.getElementById('filterPriceMin');
+    const filterPriceMax = document.getElementById('filterPriceMax');
+    const filterQuantityMin = document.getElementById('filterQuantityMin');
+    const filterHumidity = document.getElementById('filterHumidity');
+    const sortBy = document.getElementById('sortBy');
+    
+    if (searchInput) searchInput.value = '';
+    if (filterState) filterState.value = '';
+    if (filterVariety) filterVariety.value = '';
+    if (filterType) filterType.value = '';
+    if (filterPriceMin) filterPriceMin.value = '';
+    if (filterPriceMax) filterPriceMax.value = '';
+    if (filterQuantityMin) filterQuantityMin.value = '';
+    if (filterHumidity) filterHumidity.value = '';
+    if (sortBy) sortBy.value = 'recent';
+    
+    // Render all offers without filters
+    if (app) {
+        app.renderOffers({});
+    }
+    
+    app.showToast('Filtros limpos');
+}
+
+// Close modal
+function closeModal(modalId) {
+    app.closeModal(modalId);
+}
+
+// Toggle user menu
+function toggleUserMenu() {
+    app.showToast('Menu do usuário');
+}
+
+// Toggle notifications
+function toggleNotifications() {
+    app.showToast('Notificações');
+}
+
+// Toggle chat info panel
+function toggleChatInfo() {
+    const chatInfoPanel = document.getElementById('chatInfoPanel');
+    const toggleButton = document.querySelector('.info-toggle');
+    
+    if (chatInfoPanel) {
+        const isExpanded = chatInfoPanel.classList.toggle('expanded');
+        
+        // Update button icon based on state
+        if (toggleButton) {
+            const icon = toggleButton.querySelector('i');
+            const text = toggleButton.querySelector('span');
+            if (isExpanded) {
+                icon.className = 'fas fa-chevron-down';
+                text.textContent = 'Ocultar Informações';
+            } else {
+                icon.className = 'fas fa-info-circle';
+                text.textContent = 'Sobre a Oferta';
+            }
+        }
+    }
+}
+
+// Scroll to section
+function scrollToSection(sectionId) {
+    const element = document.getElementById(sectionId);
+    if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+    }
+    app.closeMobileMenu();
+}
+
+// Send message
+function sendMessage() {
+    app.sendMessage();
+}
+
+// Handle message keypress
+function handleMessageKeypress(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+    }
+}
+
+// ============================================
+// NEGOTIATIONS FUNCTIONS
+// ============================================
+
+// Accept proposal
+function acceptProposal(proposalId) {
+    if (confirm('Deseja aceitar esta proposta?')) {
+        app.showToast('Proposta aceita com sucesso!');
+        console.log('Accepting proposal:', proposalId);
+    }
+}
+
+// Reject proposal
+function rejectProposal(proposalId) {
+    if (confirm('Deseja recusar esta proposta?')) {
+        app.showToast('Proposta recusada');
+        console.log('Rejecting proposal:', proposalId);
+    }
+}
+
+// Counter proposal
+function counterProposal(proposalId) {
+    const newPrice = prompt('Digite o valor da sua contraoferta (R$/saca):');
+    if (newPrice && !isNaN(newPrice)) {
+        app.showToast(`Contraoferta de R$ ${newPrice}/saca enviada!`);
+        console.log('Counter proposal:', proposalId, newPrice);
+    }
+}
+
+// Confirm delivery
+function confirmDelivery(proposalId) {
+    if (confirm('Confirmar que a entrega foi realizada?')) {
+        app.showToast('Entrega confirmada com sucesso!');
+        console.log('Confirming delivery:', proposalId);
+    }
+}
+
+// ============================================
+// MY PURCHASES FUNCTIONS
+// ============================================
+
+// Filter purchases by status
+function filterPurchases(status) {
+    const cards = document.querySelectorAll('.purchase-card');
+    const buttons = document.querySelectorAll('.tab-button');
+    
+    // Update button states
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+        const onclick = btn.getAttribute('onclick');
+        if (onclick && onclick.includes(`'${status}'`)) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Filter cards
+    cards.forEach(card => {
+        if (status === 'all') {
+            card.style.display = 'block';
+        } else {
+            const cardStatus = card.getAttribute('data-status');
+            card.style.display = (cardStatus === status) ? 'block' : 'none';
+        }
+    });
+}
+
+// View purchase details
+function viewPurchaseDetails(purchaseId) {
+    app.showToast(`Exibindo detalhes da compra #${purchaseId}`);
+    console.log('Viewing purchase:', purchaseId);
+    // TODO: Implementar modal de detalhes
+}
+
+// Contact producer
+function contactProducer(producerId) {
+    app.showToast('Abrindo chat com o produtor...');
+    console.log('Contacting producer:', producerId);
+    // Navigate to chat
+    navigateTo('chat');
+}
+
+// Cancel purchase
+function cancelPurchase(purchaseId) {
+    if (confirm('Deseja realmente cancelar esta compra?')) {
+        app.showToast('Compra cancelada');
+        console.log('Cancelling purchase:', purchaseId);
+        // TODO: Atualizar status da compra
+    }
+}
+
+// Download invoice
+function downloadInvoice(purchaseId) {
+    app.showToast('Baixando nota fiscal...');
+    console.log('Downloading invoice:', purchaseId);
+    // TODO: Implementar download
+}
+
+// Rate purchase
+function ratePurchase(purchaseId) {
+    const rating = prompt('Avalie o produtor de 1 a 5 estrelas:');
+    if (rating && rating >= 1 && rating <= 5) {
+        app.showToast(`Avaliação de ${rating} estrelas enviada!`);
+        console.log('Rating purchase:', purchaseId, rating);
+        // TODO: Salvar avaliação
+    } else if (rating) {
+        app.showToast('Avaliação inválida. Use valores de 1 a 5.');
+    }
+}
+
+// ============================================
+// INDUSTRIES FUNCTIONS
+// ============================================
+
+// Filter industries
+function filterIndustries(filter) {
+    console.log('Filtering industries:', filter);
+    
+    // Get all industry cards
+    const cards = document.querySelectorAll('.industry-card');
+    
+    // Update button states - find buttons in the industries section
+    const industriesSection = document.getElementById('active-industries-section');
+    if (industriesSection) {
+        const buttons = industriesSection.querySelectorAll('button[onclick*="filterIndustries"]');
+        buttons.forEach(btn => {
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-secondary');
+        });
+        
+        // Highlight active filter button
+        buttons.forEach(btn => {
+            const onclickStr = btn.getAttribute('onclick');
+            if (onclickStr && onclickStr.includes(`'${filter}'`)) {
+                btn.classList.remove('btn-secondary');
+                btn.classList.add('btn-primary');
+            }
+        });
+    }
+    
+    // Filter cards
+    let visibleCount = 0;
+    cards.forEach(card => {
+        if (filter === 'all') {
+            card.style.display = 'flex';
+            visibleCount++;
+        } else if (filter === 'active') {
+            if (card.classList.contains('active')) {
+                card.style.display = 'flex';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        } else if (filter === 'inactive') {
+            if (card.classList.contains('inactive')) {
+                card.style.display = 'flex';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        }
+    });
+    
+    // Show feedback
+    const filterName = filter === 'all' ? 'Todas' : filter === 'active' ? 'Ativas' : 'Inativas';
+    app.showToast(`Mostrando ${visibleCount} indústria(s) - ${filterName}`);
+}
+
+// Toggle industries view (grid/list)
+function toggleIndustriesView(view) {
+    const grid = document.getElementById('industriesGrid');
+    const buttons = document.querySelectorAll('.view-toggle-btn');
+    
+    if (!grid) return;
+    
+    // Update grid class
+    if (view === 'list') {
+        grid.classList.add('list-view');
+    } else {
+        grid.classList.remove('list-view');
+    }
+    
+    // Update button states
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-view') === view) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Save preference
+    localStorage.setItem('industriesViewPreference', view);
+    
+    // Show feedback
+    const viewName = view === 'list' ? 'Lista' : 'Grade';
+    app.showToast(`Visualização alterada para ${viewName}`);
+}
+
+// Toggle offers view (grid/list)
+function toggleOffersView(view) {
+    const grid = document.getElementById('offersGrid');
+    const buttons = document.querySelectorAll('.view-toggle-btn');
+    
+    if (!grid) return;
+    
+    // Update grid class
+    if (view === 'list') {
+        grid.classList.add('list-view');
+    } else {
+        grid.classList.remove('list-view');
+    }
+    
+    // Update button states
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-view') === view) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Save preference
+    localStorage.setItem('offersViewPreference', view);
+    
+    // Show feedback
+    const viewName = view === 'list' ? 'Lista' : 'Grade';
+    app.showToast(`Visualização de ofertas alterada para ${viewName}`);
+    
+    // Re-render offers with new view
+    app.renderOffers();
+}
+
+// Toggle purchases view (grid/list)
+function togglePurchasesView(view) {
+    const list = document.getElementById('purchasesList');
+    const gridBtn = document.getElementById('purchasesGridViewBtn');
+    const listBtn = document.getElementById('purchasesListViewBtn');
+    
+    if (!list) return;
+    
+    // Update list class
+    if (view === 'list') {
+        list.classList.add('list-view');
+        gridBtn.classList.remove('active');
+        listBtn.classList.add('active');
+    } else {
+        list.classList.remove('list-view');
+        gridBtn.classList.add('active');
+        listBtn.classList.remove('active');
+    }
+    
+    // Save preference
+    localStorage.setItem('purchasesViewPreference', view);
+    
+    // Show feedback
+    const viewName = view === 'list' ? 'Lista' : 'Grade';
+    app.showToast(`Visualização de compras alterada para ${viewName}`);
+}
+
+// Toggle my offers view (grid/list) for producer
+function toggleMyOffersView(view) {
+    const grid = document.getElementById('myOffersGrid');
+    const gridBtn = document.getElementById('myOffersViewGrid');
+    const listBtn = document.getElementById('myOffersViewList');
+    
+    if (!grid) return;
+    
+    // Update grid class
+    if (view === 'list') {
+        grid.classList.add('list-view');
+        if (gridBtn) gridBtn.classList.remove('active');
+        if (listBtn) listBtn.classList.add('active');
+    } else {
+        grid.classList.remove('list-view');
+        if (gridBtn) gridBtn.classList.add('active');
+        if (listBtn) listBtn.classList.remove('active');
+    }
+    
+    // Save preference
+    localStorage.setItem('myOffersViewPreference', view);
+    
+    // Show feedback
+    const viewName = view === 'list' ? 'Lista' : 'Grade';
+    app.showToast(`Visualização de minhas ofertas alterada para ${viewName}`);
+}
+
+// Send message to industry
+function sendMessageToIndustry(industryId) {
+    app.showToast('Abrindo chat com a indústria...');
+    console.log('Sending message to industry:', industryId);
+    // Navigate to chat page
+    setTimeout(() => {
+        navigateTo('chat');
+    }, 500);
+}
+
+// View industry profile
+function viewIndustryProfile(industryId) {
+    app.showToast('Carregando perfil da indústria...');
+    console.log('Viewing industry profile:', industryId);
+    // TODO: Open industry profile modal or page
+}
+
+// Toggle market status for industry
+function toggleMarketStatus() {
+    const toggle = document.getElementById('marketStatusToggle');
+    const description = document.getElementById('marketStatusDescription');
+    
+    if (toggle && description) {
+        const isActive = toggle.checked;
+        
+        if (isActive) {
+            description.innerHTML = 'Sua indústria está <strong style="color: #4CAF50;">ATIVA</strong> no mercado. Produtores podem ver seu perfil e entrar em contato.';
+            app.showToast('✓ Indústria ativa no mercado!');
+        } else {
+            description.innerHTML = 'Sua indústria está <strong style="color: #F44336;">INATIVA</strong> no mercado. Produtores verão seu perfil em cinza e não poderão entrar em contato.';
+            app.showToast('Indústria marcada como inativa');
+        }
+        
+        // Save status to localStorage
+        localStorage.setItem('industryMarketStatus', isActive ? 'active' : 'inactive');
+        console.log('Market status changed to:', isActive ? 'active' : 'inactive');
+    }
+}
+
+// ============================================
+// INITIALIZATION
+// ============================================
+// INDICATORS MANAGEMENT
+// ============================================
+
+// ============================================
+// USD QUOTE AUTO-UPDATE (AwesomeAPI)
+// ============================================
+
+// Fetch USD quote from AwesomeAPI
+async function fetchUSDQuote() {
+    try {
+        const response = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const usd = data.USDBRL;
+        
+        return {
+            price: parseFloat(usd.bid), // Current price
+            change: parseFloat(usd.pctChange), // Percentage change
+            high: parseFloat(usd.high), // Day's high
+            low: parseFloat(usd.low), // Day's low
+            timestamp: usd.create_date // Update timestamp
+        };
+    } catch (error) {
+        console.error('❌ Erro ao buscar cotação do dólar:', error);
+        return null;
+    }
+}
+
+// Update USD card with live data
+async function updateUSDCardFromAPI() {
+    const quote = await fetchUSDQuote();
+    
+    if (quote) {
+        // Update price
+        const usdPrice = document.getElementById('usdPrice');
+        if (usdPrice) {
+            usdPrice.textContent = `R$ ${quote.price.toFixed(2)}`;
+        }
+        
+        // Update change with correct icon
+        const usdChange = document.getElementById('usdChange');
+        if (usdChange) {
+            const icon = quote.change >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+            const sign = quote.change >= 0 ? '+' : '';
+            usdChange.innerHTML = `<i class="fas ${icon}"></i> ${sign}${quote.change.toFixed(1)}% hoje`;
+        }
+        
+        // Update timestamp
+        const usdTime = document.getElementById('usdTime');
+        if (usdTime) {
+            try {
+                const date = new Date(quote.timestamp);
+                const time = date.toLocaleTimeString('pt-BR', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                usdTime.textContent = `Atualizado às ${time}`;
+            } catch (e) {
+                usdTime.textContent = `Atualizado agora`;
+            }
+        }
+        
+        // Save to localStorage for fallback
+        const indicators = loadIndicators();
+        indicators.usd.price = quote.price;
+        indicators.usd.change = quote.change;
+        indicators.usd.time = `Atualizado às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+        saveIndicators(indicators);
+        
+        console.log('✅ Cotação do dólar atualizada automaticamente:', {
+            price: `R$ ${quote.price.toFixed(2)}`,
+            change: `${quote.change.toFixed(1)}%`,
+            high: `R$ ${quote.high.toFixed(2)}`,
+            low: `R$ ${quote.low.toFixed(2)}`
+        });
+    } else {
+        console.warn('⚠️ Falha ao buscar cotação do dólar. Mantendo valor anterior do localStorage.');
+    }
+}
+
+// ============================================
+// INDICATORS MANAGEMENT
+// ============================================
+
+// Load indicators from localStorage
+function loadIndicators() {
+    const defaultIndicators = {
+        usd: { price: 5.89, change: -0.8, time: 'Atualizado às 15:30' },
+        weather: { temp: 24, rain: 60, condition: 'Condições favoráveis para colheita' }
+    };
+    
+    const saved = localStorage.getItem('mercadoArroz_indicators');
+    return saved ? JSON.parse(saved) : defaultIndicators;
+}
+
+// Save indicators to localStorage
+function saveIndicators(indicators) {
+    localStorage.setItem('mercadoArroz_indicators', JSON.stringify(indicators));
+}
+
+// ============================================
+// MARKET STATISTICS (Industry Dashboard)
+// ============================================
+
+// Calculate average price from all active offers
+function calculateAverageOfferPrice() {
+    const offers = JSON.parse(localStorage.getItem('mercadoArroz_offers') || '[]');
+    const activeOffers = offers.filter(offer => offer.status === 'active');
+    
+    if (activeOffers.length === 0) {
+        return { average: 0, count: 0, min: 0, max: 0 };
+    }
+    
+    const prices = activeOffers.map(offer => offer.price);
+    const sum = prices.reduce((acc, price) => acc + price, 0);
+    const average = sum / prices.length;
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    
+    return {
+        average: average,
+        count: activeOffers.length,
+        min: min,
+        max: max
+    };
+}
+
+// Save daily average for trend calculation
+function saveDailyAverage(average) {
+    const today = new Date().toISOString().split('T')[0];
+    const history = JSON.parse(localStorage.getItem('mercadoArroz_priceHistory') || '{}');
+    history[today] = average;
+    
+    // Keep only last 30 days
+    const dates = Object.keys(history).sort();
+    if (dates.length > 30) {
+        const oldDates = dates.slice(0, dates.length - 30);
+        oldDates.forEach(date => delete history[date]);
+    }
+    
+    localStorage.setItem('mercadoArroz_priceHistory', JSON.stringify(history));
+}
+
+// Calculate price change percentage
+function calculatePriceChange() {
+    const today = new Date().toISOString().split('T')[0];
+    const history = JSON.parse(localStorage.getItem('mercadoArroz_priceHistory') || '{}');
+    const dates = Object.keys(history).sort();
+    
+    if (dates.length < 2) {
+        return 0; // Not enough data
+    }
+    
+    const todayPrice = history[today];
+    const yesterdayPrice = history[dates[dates.length - 2]];
+    
+    if (!todayPrice || !yesterdayPrice || yesterdayPrice === 0) {
+        return 0;
+    }
+    
+    const change = ((todayPrice - yesterdayPrice) / yesterdayPrice) * 100;
+    return change;
+}
+
+// Update market statistics display
+function updateMarketStatistics() {
+    const stats = calculateAverageOfferPrice();
+    
+    // Update average price
+    const avgPriceEl = document.getElementById('averageOfferPrice');
+    if (avgPriceEl && stats.count > 0) {
+        avgPriceEl.textContent = `R$ ${stats.average.toFixed(2)}/saca`;
+        saveDailyAverage(stats.average);
+        
+        // Update price change
+        const change = calculatePriceChange();
+        const changeEl = document.getElementById('averageOfferPriceChange');
+        if (changeEl) {
+            const icon = change >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+            const cssClass = change >= 0 ? 'positive' : 'negative';
+            const sign = change >= 0 ? '+' : '';
+            changeEl.className = `change ${cssClass}`;
+            changeEl.innerHTML = `<i class="fas ${icon}"></i> ${sign}${change.toFixed(1)}%`;
+        }
+    }
+    
+    // Update total offers count
+    const countEl = document.getElementById('totalOffersCount');
+    if (countEl) {
+        countEl.textContent = stats.count;
+        
+        // Calculate new offers (created today)
+        const today = new Date().toISOString().split('T')[0];
+        const offers = JSON.parse(localStorage.getItem('mercadoArroz_offers') || '[]');
+        const newOffersToday = offers.filter(offer => 
+            offer.status === 'active' && offer.createdAt === today
+        ).length;
+        
+        const changeEl = document.getElementById('totalOffersChange');
+        if (changeEl && newOffersToday > 0) {
+            changeEl.className = 'change positive';
+            changeEl.innerHTML = `<i class="fas fa-arrow-up"></i> ${newOffersToday} novas`;
+        } else if (changeEl) {
+            changeEl.innerHTML = '';
+        }
+    }
+}
+
+// Update indicators display
+function updateIndicatorsDisplay() {
+    const indicators = loadIndicators();
+    
+    // USD
+    const usdPrice = document.getElementById('usdPrice');
+    if (usdPrice) {
+        usdPrice.textContent = `R$ ${indicators.usd.price.toFixed(2)}`;
+        const usdChangeEl = document.getElementById('usdChange');
+        const usdIcon = indicators.usd.change >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+        const usdSign = indicators.usd.change >= 0 ? '+' : '';
+        usdChangeEl.innerHTML = `<i class="fas ${usdIcon}"></i> ${usdSign}${indicators.usd.change}% hoje`;
+        document.getElementById('usdTime').textContent = indicators.usd.time;
+    }
+    
+    // Weather
+    const weatherTemp = document.getElementById('weatherTemp');
+    if (weatherTemp) {
+        weatherTemp.textContent = `${indicators.weather.temp}°C`;
+        document.getElementById('weatherRain').innerHTML = `<i class="fas fa-tint"></i> ${indicators.weather.rain}% chuva`;
+        document.getElementById('weatherCondition').textContent = indicators.weather.condition;
+    }
+}
+
+// Open indicators modal
+function openIndicatorsModal() {
+    const indicators = loadIndicators();
+    
+    // Populate form with current values
+    document.getElementById('usdPriceInput').value = indicators.usd.price;
+    document.getElementById('usdChangeInput').value = indicators.usd.change;
+    document.getElementById('weatherTempInput').value = indicators.weather.temp;
+    document.getElementById('weatherRainInput').value = indicators.weather.rain;
+    document.getElementById('weatherConditionInput').value = indicators.weather.condition;
+    
+    // Open modal
+    document.getElementById('indicatorsModal').classList.add('active');
+}
+
+// Handle indicators form submission
+function handleUpdateIndicators(event) {
+    event.preventDefault();
+    
+    const now = new Date();
+    const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    
+    const indicators = {
+        usd: {
+            price: parseFloat(document.getElementById('usdPriceInput').value),
+            change: parseFloat(document.getElementById('usdChangeInput').value),
+            time: `Atualizado às ${timeString}`
+        },
+        weather: {
+            temp: parseInt(document.getElementById('weatherTempInput').value),
+            rain: parseInt(document.getElementById('weatherRainInput').value),
+            condition: document.getElementById('weatherConditionInput').value
+        }
+    };
+    
+    saveIndicators(indicators);
+    updateIndicatorsDisplay();
+    closeModal('indicatorsModal');
+    
+    if (typeof app !== 'undefined') {
+        app.showToast('Indicadores atualizados com sucesso!');
+    }
+}
+
+// ============================================
+// APP INITIALIZATION
+// ============================================
+
+// Initialize app when DOM is loaded
+let app;
+
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        console.log('=== INITIALIZING APP ===');
+        app = new MercadoArrozApp();
+        console.log('✅ Mercado Arroz App initialized');
+        console.log('✅ App object available:', typeof app !== 'undefined');
+        
+        // ============================================
+        // CREATE SAMPLE OFFERS FROM PRODUCERS (if none exist)
+        // ============================================
+        const existingOffers = JSON.parse(localStorage.getItem('mercadoArroz_offers') || '[]');
+        if (existingOffers.length === 0) {
+            console.log('Creating sample offers...');
+            const today = new Date().toISOString().split('T')[0];
+            const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+            const twoDaysAgo = new Date(Date.now() - 172800000).toISOString().split('T')[0];
+            const threeDaysAgo = new Date(Date.now() - 259200000).toISOString().split('T')[0];
+            const oneWeekAgo = new Date(Date.now() - 604800000).toISOString().split('T')[0];
+            
+            const sampleOffers = [
+            // João Silva offers
+            {
+                id: 'offer_' + Date.now() + '_1',
+                producerId: 'user_001', // João Silva
+                variety: 'IRGA 424',
+                type: 'Tipo 1',
+                price: 88.00,
+                quantity: 500,
+                unit: 'sacas',
+                humidity: 18,
+                city: 'Cachoeira do Sul',
+                state: 'RS',
+                freight: 'FOB',
+                expiration: new Date(Date.now() + 2592000000).toISOString().split('T')[0], // 30 days
+                createdAt: yesterday,
+                status: 'active',
+                views: 45,
+                favorites: 8
+            },
+            {
+                id: 'offer_' + Date.now() + '_2',
+                producerId: 'user_001', // João Silva
+                variety: 'GURI INTA CL',
+                type: 'Tipo 1',
+                price: 92.00,
+                quantity: 350,
+                unit: 'sacas',
+                humidity: 16,
+                city: 'Cachoeira do Sul',
+                state: 'RS',
+                freight: 'CIF',
+                expiration: new Date(Date.now() + 2592000000).toISOString().split('T')[0],
+                createdAt: twoDaysAgo,
+                status: 'active',
+                views: 67,
+                favorites: 12
+            },
+            {
+                id: 'offer_' + Date.now() + '_3',
+                producerId: 'user_001', // João Silva
+                variety: 'BR-IRGA 409',
+                type: 'Tipo 1',
+                price: 85.00,
+                quantity: 600,
+                unit: 'sacas',
+                humidity: 17,
+                city: 'Cachoeira do Sul',
+                state: 'RS',
+                freight: 'FOB',
+                expiration: new Date(Date.now() + 2592000000).toISOString().split('T')[0],
+                createdAt: threeDaysAgo,
+                status: 'active',
+                views: 89,
+                favorites: 15
+            },
+            // Maria Oliveira offers
+            {
+                id: 'offer_' + Date.now() + '_4',
+                producerId: 'user_002', // Maria Oliveira
+                variety: 'IRGA 424 RI',
+                type: 'Tipo 1',
+                price: 90.00,
+                quantity: 400,
+                unit: 'sacas',
+                humidity: 15,
+                city: 'Santa Maria',
+                state: 'RS',
+                freight: 'FOB',
+                expiration: new Date(Date.now() + 2592000000).toISOString().split('T')[0],
+                createdAt: today,
+                status: 'active',
+                views: 23,
+                favorites: 5
+            },
+            {
+                id: 'offer_' + Date.now() + '_5',
+                producerId: 'user_002', // Maria Oliveira
+                variety: 'PUITÁ INTA CL',
+                type: 'Tipo 1',
+                price: 87.00,
+                quantity: 300,
+                unit: 'sacas',
+                humidity: 16,
+                city: 'Santa Maria',
+                state: 'RS',
+                freight: 'CIF',
+                expiration: new Date(Date.now() + 2592000000).toISOString().split('T')[0],
+                createdAt: yesterday,
+                status: 'active',
+                views: 34,
+                favorites: 7
+            },
+            {
+                id: 'offer_' + Date.now() + '_6',
+                producerId: 'user_002', // Maria Oliveira
+                variety: 'BR-IRGA 409',
+                type: 'Tipo 2',
+                price: 82.00,
+                quantity: 450,
+                unit: 'sacas',
+                humidity: 18,
+                city: 'Santa Maria',
+                state: 'RS',
+                freight: 'FOB',
+                expiration: new Date(Date.now() + 2592000000).toISOString().split('T')[0],
+                createdAt: oneWeekAgo,
+                status: 'active',
+                views: 102,
+                favorites: 18
+            }
+        ];
+        
+        localStorage.setItem('mercadoArroz_offers', JSON.stringify(sampleOffers));
+        console.log('✅ Sample offers created:', sampleOffers.length);
+    }
+    
+    // ============================================
+    // CREATE SAMPLE PROPOSALS (if none exist)
+    // ============================================
+    const existingProposals = JSON.parse(localStorage.getItem('mercadoArroz_proposals') || '[]');
+    if (existingProposals.length === 0) {
+        const allOffers = JSON.parse(localStorage.getItem('mercadoArroz_offers') || '[]');
+        const offer1 = allOffers.find(o => o.variety === 'IRGA 424' && o.producerId === 'user_001');
+        const offer2 = allOffers.find(o => o.variety === 'GURI INTA CL' && o.producerId === 'user_001');
+        const offer3 = allOffers.find(o => o.variety === 'BR-IRGA 409' && o.producerId === 'user_001');
+        const offer4 = allOffers.find(o => o.variety === 'IRGA 424 RI' && o.producerId === 'user_002');
+        const offer5 = allOffers.find(o => o.variety === 'PUITÁ INTA CL' && o.producerId === 'user_002');
+        
+        const sampleProposals = [
+            {
+                id: 'prop_' + Date.now() + '_1',
+                offerId: offer1 ? offer1.id : 'offer_1',
+                producerId: 'user_001', // João Silva
+                industryId: 'user_003', // Indústria Riz S.A.
+                offerPrice: 88.00,
+                proposedPrice: 86.50,
+                quantity: 500,
+                variety: 'IRGA 424',
+                type: 'Tipo 1',
+                message: 'Interessado em comprar toda a produção. Temos transporte próprio.',
+                status: 'pending',
+                createdAt: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
+                updatedAt: new Date(Date.now() - 7200000).toISOString()
+            },
+            {
+                id: 'prop_' + Date.now() + '_2',
+                offerId: offer2 ? offer2.id : 'offer_2',
+                producerId: 'user_001', // João Silva
+                industryId: 'user_003', // Indústria Riz S.A.
+                offerPrice: 92.00,
+                proposedPrice: 91.00,
+                quantity: 350,
+                variety: 'GURI INTA CL',
+                type: 'Tipo 1',
+                message: 'Proposta de compra imediata com pagamento à vista.',
+                status: 'accepted',
+                createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+                updatedAt: new Date(Date.now() - 43200000).toISOString() // 12 hours ago
+            },
+            {
+                id: 'prop_' + Date.now() + '_3',
+                offerId: offer3 ? offer3.id : 'offer_3',
+                producerId: 'user_001', // João Silva
+                industryId: 'user_003', // Indústria Riz S.A.
+                offerPrice: 85.00,
+                proposedPrice: 82.00,
+                quantity: 400,
+                variety: 'BR-IRGA 409',
+                type: 'Tipo 1',
+                message: 'Gostaria de negociar preço devido ao grande volume.',
+                status: 'rejected',
+                createdAt: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
+                updatedAt: new Date(Date.now() - 172800000).toISOString() // 2 days ago
+            },
+            {
+                id: 'prop_' + Date.now() + '_4',
+                offerId: offer4 ? offer4.id : 'offer_4',
+                producerId: 'user_002', // Maria Oliveira
+                industryId: 'user_003', // Indústria Riz S.A.
+                offerPrice: 90.00,
+                proposedPrice: 89.00,
+                quantity: 400,
+                variety: 'IRGA 424 RI',
+                type: 'Tipo 1',
+                message: 'Ótima qualidade! Podemos negociar condições de pagamento?',
+                status: 'pending',
+                createdAt: new Date(Date.now() - 14400000).toISOString(), // 4 hours ago
+                updatedAt: new Date(Date.now() - 14400000).toISOString()
+            },
+            {
+                id: 'prop_' + Date.now() + '_5',
+                offerId: offer5 ? offer5.id : 'offer_5',
+                producerId: 'user_002', // Maria Oliveira
+                industryId: 'user_003', // Indústria Riz S.A.
+                offerPrice: 87.00,
+                proposedPrice: 87.00,
+                quantity: 300,
+                variety: 'PUITÁ INTA CL',
+                type: 'Tipo 1',
+                message: 'Aceito o preço proposto. Quando podemos fechar?',
+                status: 'accepted',
+                createdAt: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+                updatedAt: new Date(Date.now() - 86400000).toISOString() // 1 day ago
+            }
+        ];
+        localStorage.setItem('mercadoArroz_proposals', JSON.stringify(sampleProposals));
+        console.log('✅ Sample proposals created:', sampleProposals.length);
+    }
+    
+    // ============================================
+    // INITIALIZE APP
+    // ============================================
+    
+    // Load and display indicators
+    updateIndicatorsDisplay();
+    
+    // Update market statistics (average price and offer count)
+    updateMarketStatistics();
+    console.log('✅ Estatísticas de mercado atualizadas');
+    
+    // Auto-update USD quote from API
+    updateUSDCardFromAPI(); // Initial update
+    setInterval(updateUSDCardFromAPI, 300000); // Update every 5 minutes (300000ms)
+    console.log('✅ Cotação do dólar: Atualização automática ativada (a cada 5 minutos)');
+    
+    // Show market availability card only for industries
+    const currentUser = JSON.parse(localStorage.getItem('mercadoArroz_currentUser') || '{}');
+    const marketCard = document.getElementById('marketAvailabilityCard');
+    
+    if (currentUser.type === 'industry' && marketCard) {
+        marketCard.style.display = 'block';
+        
+        // Load saved market status
+        const savedStatus = localStorage.getItem('industryMarketStatus') || 'active';
+        const toggle = document.getElementById('marketStatusToggle');
+        if (toggle) {
+            toggle.checked = (savedStatus === 'active');
+            toggleMarketStatus(); // Update description
+        }
+    }
+    
+    // ============================================
+    // SEARCH AND FILTER EVENT LISTENERS
+    // ============================================
+    
+    // Real-time search
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', debounce(() => {
+            applyFilters();
+        }, 500));
+    }
+    
+    // Sort by change
+    const sortBy = document.getElementById('sortBy');
+    if (sortBy) {
+        sortBy.addEventListener('change', () => {
+            applyFilters();
+        });
+    }
+    
+    console.log('✅ Event listeners de busca e filtros configurados');
+    
+    // ============================================
+    // RESTORE VIEW PREFERENCES
+    // ============================================
+    
+    // Restore industries view preference
+    const savedView = localStorage.getItem('industriesViewPreference') || 'grid';
+    const industriesGrid = document.getElementById('industriesGrid');
+    if (industriesGrid && savedView === 'list') {
+        toggleIndustriesView('list');
+    }
+    
+    // Restore offers view preference
+    const savedOffersView = localStorage.getItem('offersViewPreference') || 'grid';
+    const offersGrid = document.getElementById('offersGrid');
+    if (offersGrid && savedOffersView === 'list') {
+        toggleOffersView('list');
+    }
+    
+    // Restore purchases view preference
+    const savedPurchasesView = localStorage.getItem('purchasesViewPreference') || 'grid';
+    const purchasesList = document.getElementById('purchasesList');
+    if (purchasesList && savedPurchasesView === 'list') {
+        app.togglePurchasesView('list');
+    }
+    
+    console.log('=== APP INITIALIZATION COMPLETE ===');
+    console.log('✅ All systems ready');
+    
+    } catch (error) {
+        console.error('=== CRITICAL ERROR DURING INITIALIZATION ===');
+        console.error('Error:', error);
+        console.error('Stack:', error.stack);
+        alert('ERRO CRÍTICO: Falha ao inicializar o sistema.\n\n' + error.message + '\n\nPor favor, limpe o cache do navegador (Ctrl+Shift+Del) e recarregue a página.');
+    }
+});
+
+// Debounce function for search input
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
